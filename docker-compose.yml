@@ -28,7 +28,7 @@ services:
   frontend:
     build:
       context: ./services/frontend  # Ensure this is correct
-      dockerfile: Dockerfile.prod  # Ensure the Dockerfile is referenced
+      dockerfile: Dockerfile  # Ensure the Dockerfile is referenced
     ports:
       - "3000:3000"  # React app will run on port 3000
     volumes:
