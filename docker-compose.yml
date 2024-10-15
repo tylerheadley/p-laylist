@@ -11,7 +11,7 @@ services:
     env_file:
       - ./.env.dev
     depends_on:
-        - postgres
+      - postgres
 
   postgres:
     build: services/postgres
@@ -24,6 +24,18 @@ services:
       - PGUSER=postgres
     ports:
       - 12346:5432
+
+  frontend:
+    build: ./services/frontend  # Assuming this is where the React app's Dockerfile is located
+    ports:
+      - "3000:3000"  # React app will run on port 3000
+    volumes:
+      - ./services/frontend:/app  # Mounting the local directory into the container
+    stdin_open: true  # Keeps the container open for interactive commands
+    tty: true         # Allocates a pseudo-TTY for interactive commands
+    depends_on:
+      - web
+      - postgres
 
 volumes:
   postgres_data:

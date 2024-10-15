@@ -21,9 +21,20 @@ services:
     volumes:
       - ./:/tmp/db
       - postgres_data_prod:/var/lib/postgresql/data/
-    ports: ["12346:5432"]    
+    ports: ["12346:5432"]
     env_file:
       - ./.env.prod.db
+
+  frontend:
+    build:
+      context: ./services/frontend
+      dockerfile: Dockerfile.prod  # Use a Dockerfile specific to production
+    volumes:
+      - static_volume:/home/app/web/project/static  # Copy build output to static folder
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - web
 
   nginx:
     build: ./services/nginx
@@ -34,6 +45,7 @@ services:
       - 80:80
     depends_on:
       - web
+      - frontend
 
 volumes:
   postgres_data_prod:
