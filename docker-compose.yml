@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  web:
-    build: ./services/web
+  backend:
+    build: ./services/backend
     command: python manage.py run -h 0.0.0.0
     volumes:
-      - ./services/web/:/usr/src/app/
+      - ./services/backend/:/usr/src/app/
     ports:
       - 1341:5000
     env_file:
@@ -26,15 +26,18 @@ services:
       - 12346:5432
 
   frontend:
-    build: ./services/frontend  # Assuming this is where the React app's Dockerfile is located
+    build:
+      context: ./services/frontend  # Ensure this is correct
+      dockerfile: Dockerfile.prod  # Ensure the Dockerfile is referenced
     ports:
       - "3000:3000"  # React app will run on port 3000
     volumes:
       - ./services/frontend:/app  # Mounting the local directory into the container
+      - /app/node_modules  # Exclude node_modules from the host filesystem
     stdin_open: true  # Keeps the container open for interactive commands
     tty: true         # Allocates a pseudo-TTY for interactive commands
     depends_on:
-      - web
+      - backend
       - postgres
 
 volumes:

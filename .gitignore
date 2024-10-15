@@ -9,3 +9,7 @@
 *.pem
 .DS_Store
 ./services/frontend/node_modules
+services/frontend/node_modules
+./services/frontend/node_modules/*
+services/frontend/node_modules/*
+*/node_modules/*
