@@ -6,4 +6,6 @@
 *.swo
 *.swn
 *.swm
+*.pem
+.DS_Store
 ./services/frontend/node_modules
