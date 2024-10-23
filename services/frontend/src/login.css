@@ -1,0 +1,80 @@
+/* Import Martel font */
+@import url('https://fonts.googleapis.com/css2?family=Martel:wght@400;700&display=swap');
+
+/* Apply the Martel font to the entire page */
+body {
+  font-family: 'Martel', serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+  margin: 0;
+  background-color: #0B1354; /* Background color for the whole page */
+}
+
+.login-container {
+  background-color: #F9D1D1; /* Soft background for the container */
+  width: 350px;
+  padding: 30px;
+  border: 1px solid #F765A3; /* Border color */
+  border-radius: 10px; /* Rounded corners for a softer look */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #165BAA; /* Heading color */
+  font-family: 'Martel', serif;
+  font-size: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #A155B9; /* Label color */
+  font-family: 'Martel', serif;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #A155B9; /* Border for input fields */
+  border-radius: 6px;
+  background-color: #F9D1D1; /* Light background for input */
+  font-size: 14px;
+  font-family: 'Martel', serif;
+}
+
+input:focus {
+  border-color: #165BAA; /* Border color on focus */
+  outline: none; /* Remove default outline */
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: #F765A3; /* Button background color */
+  color: white; /* Button text color */
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'Martel', serif;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #A155B9; /* Darker color on hover */
+}
+
+button:active {
+  background-color: #FAA4B6; /* Subtle color change when clicked */
+}

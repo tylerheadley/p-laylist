@@ -1,27 +1,27 @@
 import React, { useState } from 'react';
 import './login.css'; // Make sure this file exists and has styles
 
-const login = () => {
-  const [email, setEmail] = useState('');
+const Login = () => {  // Use an uppercase "L" for the component name
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Email:', email);
+    console.log('Username:', username);
     console.log('Password:', password);
     // Handle authentication logic here
   };
 
   return (
     <div className="login-container">
-      <h2>login</h2>
+      <h2>Login</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Email:</label>
+          <label>Username:</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
           />
         </div>
@@ -34,10 +34,10 @@ const login = () => {
             required
           />
         </div>
-        <button type="submit">login</button>
+        <button type="submit">Login</button>
       </form>
     </div>
   );
 };
 
-export default login;
+export default Login;  
