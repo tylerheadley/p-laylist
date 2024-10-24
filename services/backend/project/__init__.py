@@ -81,7 +81,6 @@ def root():
                            prev_page_url=prev_page_url,
                            logged_in=is_logged_in())
 
-
 def are_credentials_good(username, password):
     db_url = "postgresql://postgres:pass@postgres:5432"
     engine = sqlalchemy.create_engine(db_url, connect_args={
@@ -109,7 +108,7 @@ def is_logged_in():
     return are_credentials_good(username, password)
 
 
-@app.route("/login", methods=['GET', 'POST'])
+# @app.route("/login", methods=['GET', 'POST'])
 def login():
 
     username = request.form.get('username')
@@ -125,12 +124,9 @@ def login():
         response = make_response(redirect(url_for('root')))
         response.set_cookie('username', username)
         response.set_cookie('password', password)
-        return response
+        return jsonify({"message": "Login successful!"}), 200
     else:
-        return render_template(
-            'login.html',
-            logged_in=good_credentials,
-            login_default=login_default)
+        return jsonify({"error": "Invalid credentials"}), 401
 
 
 @app.route("/logout")
@@ -144,50 +140,94 @@ def logout():
     response.set_cookie('username', '', expires=0)
     response.set_cookie('password', '', expires=0)
 
-    return response
+    return jsonify({'message': 'Logged out successfully'})
 
-
-@app.route("/create_account", methods=['GET', 'POST'])
+@app.route("/create_account", methods=['POST'])
 def create_account():
+    data = request.json  # Expecting JSON data from React
 
-    form = request.form.to_dict()
-
+    # Default states
     username_exists = False
     passwords_different = False
 
-    if form and form['password1'] == form['password2']:
+    if data and data['password1'] == data['password2']:
         try:
+            # Database connection
             db_url = "postgresql://postgres:pass@postgres:5432"
-            engine = sqlalchemy.create_engine(db_url, connect_args={
+            engine = create_engine(db_url, connect_args={
                 'application_name': '__init__.py create_account()',
             })
             connection = engine.connect()
 
+            # Insert user into database
             connection.execute(text(
                 "INSERT INTO users (name, screen_name, password) "
                 "VALUES (:name, :username, :password1);"
-            ), form)
+            ), data)
 
             connection.commit()
-
             connection.close()
 
-            response = make_response(redirect(url_for('root')))
-            response.set_cookie('username', form['username'])
-            response.set_cookie('password', form['password1'])
+            # Create response with cookie (username and password)
+            response = make_response(jsonify({"message": "Account created successfully!"}), 201)
+            response.set_cookie('username', data['username'])
+            response.set_cookie('password', data['password1'])
+
             return response
 
         except IntegrityError as e:
-            print("error inserting user:", e)
+            # Handle case where username already exists
+            print("Error inserting user:", e)
             username_exists = True
-    elif form:
-        passwords_different = True
+            return jsonify({"error": "Username already exists"}), 400
 
-    return render_template(
-        'create_account.html',
-        username_exists=username_exists,
-        passwords_different=passwords_different,
-        logged_in=is_logged_in())
+    elif data:
+        # Passwords don't match
+        passwords_different = True
+        return jsonify({"error": "Passwords do not match"}), 400
+
+    return jsonify({"error": "Invalid input"}), 400
+# @app.route("/create_account", methods=['GET', 'POST'])
+# def create_account():
+
+#     form = request.form.to_dict()
+
+#     username_exists = False
+#     passwords_different = False
+
+#     if form and form['password1'] == form['password2']:
+#         try:
+#             db_url = "postgresql://postgres:pass@postgres:5432"
+#             engine = sqlalchemy.create_engine(db_url, connect_args={
+#                 'application_name': '__init__.py create_account()',
+#             })
+#             connection = engine.connect()
+
+#             connection.execute(text(
+#                 "INSERT INTO users (name, screen_name, password) "
+#                 "VALUES (:name, :username, :password1);"
+#             ), form)
+
+#             connection.commit()
+
+#             connection.close()
+
+#             response = make_response(redirect(url_for('root')))
+#             response.set_cookie('username', form['username'])
+#             response.set_cookie('password', form['password1'])
+#             return response
+
+#         except IntegrityError as e:
+#             print("error inserting user:", e)
+#             username_exists = True
+#     elif form:
+#         passwords_different = True
+
+#     return render_template(
+#         'create_account.html',
+#         username_exists=username_exists,
+#         passwords_different=passwords_different,
+#         logged_in=is_logged_in())
 
 
 @app.route("/create_message", methods=['GET', 'POST'])
@@ -244,7 +284,9 @@ def create_message():
 
         connection.close()
 
-    return render_template('create_message.html', logged_in=is_logged_in())
+        return jsonify({"message": "Tweet created successfully!"}), 201
+
+    return jsonify({"error": "User not logged in or invalid tweet"}), 400
 
 
 @app.route("/search", methods=['GET', 'POST'])
@@ -315,12 +357,17 @@ def search():
     if page > 1:
         prev_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1)
 
-    return render_template('search.html',
-                           tweets=tweets,
-                           next_page_url=next_page_url,
-                           prev_page_url=prev_page_url,
-                           logged_in=is_logged_in())
-
+    return jsonify(tweets=tweets, next_page_url=next_page_url, prev_page_url=prev_page_url)
+    # return jsonify({
+    #     'tweets': [{
+    #         'user_name': tweet.user_name,
+    #         'screen_name': tweet.screen_name,
+    #         'text': tweet.text,
+    #         'created_at': tweet.created_at
+    #     } for tweet in tweets],
+    #     'next_page_url': next_page_url,
+    #     'prev_page_url': prev_page_url
+    # })
 
 @app.route('/trending')
 def trending():
@@ -352,10 +399,14 @@ def trending():
         })
         i += 1
 
-    return render_template('trending.html',
-                           tags=tags,
-                           logged_in=is_logged_in())
-
+    return jsonify({
+        'tags': [{
+            'rank': tag.rank,
+            'tag': tag.tag,
+            'count': tag.count,
+            'url': tag.url
+        } for tag in tags]
+    })
 # @app.route("/static/<path:filename>")
 # def staticfiles(filename):
 #     return send_from_directory(app.config["STATIC_FOLDER"], filename)
