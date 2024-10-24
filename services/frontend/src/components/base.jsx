@@ -1,7 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
-const NavBar = ({ loggedIn }) => {
+const NavBar = () => {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if the user is logged in by calling the Flask API
+    axios.get('/api/check_login')
+      .then((response) => {
+        setLoggedIn(response.data.logged_in);
+      })
+      .catch((error) => {
+        console.error('Error checking login status:', error);
+      });
+  }, []);
+
   return (
     <header>
       <nav className="navbar">
@@ -27,7 +41,8 @@ const NavBar = ({ loggedIn }) => {
   );
 };
 
-// export default NavBar;
+export default NavBar;
+
 // <!-- <!DOCTYPE html>
 // <html lang="en">
 // <head>

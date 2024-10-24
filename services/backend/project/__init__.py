@@ -12,6 +12,7 @@ from flask import (
 import bleach
 import re
 import datetime
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
@@ -26,7 +27,7 @@ app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
 
 
-@app.route("/")
+@app.route("/api/tweets", methods=["GET"])
 def root():
     try:
         page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
@@ -49,11 +50,9 @@ def root():
         "SELECT u.name, u.screen_name, t.text, t.created_at "
         "FROM tweets t "
         "JOIN users u USING (id_users) "
-        "ORDER BY created_at DESC, u.screen_name "
+        "ORDER BY t.created_at DESC, u.screen_name "
         "LIMIT :per_page OFFSET :offset;"
     ), {'per_page': per_page, 'offset': offset})
-
-    connection.close()
 
     rows = result.fetchall()
 
@@ -66,20 +65,21 @@ def root():
             'created_at': row[3]
         })
 
-    # Check if there are more messages to display on next pages
+    # Check if there are more messages to display on the next pages
     next_page_url = None
     if len(rows) == per_page:
-        next_page_url = url_for('root', page=page + 1)
+        next_page_url = url_for('root', page=page + 1, _external=True)
 
     prev_page_url = None
     if page > 1:
-        prev_page_url = url_for('root', page=page - 1)
+        prev_page_url = url_for('root', page=page - 1, _external=True)
 
-    return render_template('index.html',
-                           tweets=tweets,
-                           next_page_url=next_page_url,
-                           prev_page_url=prev_page_url,
-                           logged_in=is_logged_in())
+    # Return JSON data instead of rendering HTML
+    return jsonify({
+        'tweets': tweets,
+        'next_page_url': next_page_url,
+        'prev_page_url': prev_page_url
+    })
 
 def are_credentials_good(username, password):
     db_url = "postgresql://postgres:pass@postgres:5432"
