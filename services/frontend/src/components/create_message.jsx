@@ -3,10 +3,11 @@ import axios from 'axios';
 
 function CreateTweet() {
   const [tweet, setTweet] = useState('');
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341'; // Use environment variable
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post('/api/create_message', { tweet })
+    axios.post(`${API_URL}/api/create_message`, { tweet }) // Updated to use API_URL
       .then(response => {
         alert('Tweet created!');
       })
@@ -29,15 +30,3 @@ function CreateTweet() {
 }
 
 export default CreateTweet;
-// <!-- {% extends 'base.html' %}
-
-// {% block content %}
-// <div class="centered-container">
-//     <h2>Create Message</h2>
-//     <form class="tweet-form" action="/create_message" method="POST">
-//         <textarea rows="10" id="tweet" name="tweet" placeholder="Enter your tweet here..."></textarea>
-//         <input type="submit" value="Send Tweet"> 
-//     </form>
-        
-// </div>
-// {% endblock %} -->

@@ -4,17 +4,17 @@ import axios from 'axios';
 
 const NavBar = () => {
   const [loggedIn, setLoggedIn] = useState(false);
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
 
   useEffect(() => {
-    // Check if the user is logged in by calling the Flask API
-    axios.get('/api/check_login')
+    axios.get(`${API_URL}/api/login`)
       .then((response) => {
         setLoggedIn(response.data.logged_in);
       })
       .catch((error) => {
         console.error('Error checking login status:', error);
       });
-  }, []);
+  }, [API_URL]);
 
   return (
     <header>
@@ -42,37 +42,3 @@ const NavBar = () => {
 };
 
 export default NavBar;
-
-// <!-- <!DOCTYPE html>
-// <html lang="en">
-// <head>
-//     <meta charset="UTF-8">
-//     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-//     <title>Tyler's Twitter Clone</title>
-//     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
-// </head>
-// <body>
-//     <script>0</script>
-//     <header>
-//         <nav class="navbar">
-//             <h1 class="navbar-title">Big Data Twitter Clone</h1>
-//             <ol class="navbar-links">
-//                 <li><a href='/'>Home</a></li>
-//                 <li><a href='/search'>Search</a></li>
-//                 <li><a href='/trending'>Trending</a></li>
-//                 {% if logged_in %}
-//                 <li><a href='/create_message'>Create Message</a></li>
-//                 <li><a href='/logout'>Logout</a></li>
-//                 {% else %}
-//                 <li><a href='/login'>Login</a></li>
-//                 <li><a href='/create_account'>Create Account</a></li>
-//                 {% endif %}
-//             </ol>
-//         </nav>
-//     </header>
-
-//     {% block content %}
-//     {% endblock %}
-// </body>
-// </html> -->

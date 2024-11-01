@@ -1,5 +1,4 @@
-// Search.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const Search = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -7,9 +6,10 @@ const Search = () => {
     const [prevPageUrl, setPrevPageUrl] = useState(null);
     const [nextPageUrl, setNextPageUrl] = useState(null);
 
+    const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
     const handleSearch = async (event) => {
         event.preventDefault();
-        const response = await fetch(`/search?search_query=${searchQuery}`);
+        const response = await fetch(`${API_URL}/search?search_query=${searchQuery}`);
         const data = await response.json();
         setTweets(data.tweets);
         setPrevPageUrl(data.prev_page_url);
@@ -49,35 +49,3 @@ const Search = () => {
 };
 
 export default Search;
-
-// {% extends 'base.html' %}
-
-// {% block content %}
-// <div class="centered-container">
-//     <h2>Search</h2>
-//     <form class="searchbar" action="/search" method="GET">
-//         <input type="text" required name="search_query" placeholder="Search Tweets">
-//         <input type="submit" value="Search"> 
-//     </form>
-//     <div class="tweets">
-//         {% for tweet in tweets %}
-//         <div class="tweet">
-//             <div class="user-info">
-//                 <span class="user-name">{{ tweet.user_name }}</span>
-//                 <span class="screen-name">@{{ tweet.screen_name }}</span>
-//             </div>
-//             <p class="tweet-text">{{ tweet.text | safe }}</p>
-//             <p class="created-at">Created at: {{ tweet.created_at }}</p>
-//         </div>
-//         {% endfor %}
-
-//         {% if prev_page_url %}
-//         <a class="prev btn" href="{{ prev_page_url }}">Previous Page</a>
-//         {% endif %}
-//         {% if next_page_url %}
-//         <a class="next btn" href="{{ next_page_url }}">Next Page</a>
-//         {% endif %}
-
-//     </div>
-// </div>
-// {% endblock %}

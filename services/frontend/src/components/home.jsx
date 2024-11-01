@@ -5,22 +5,20 @@ const Home = () => {
   const [tweets, setTweets] = useState([]);
   const [prevPageUrl, setPrevPageUrl] = useState(null);
   const [nextPageUrl, setNextPageUrl] = useState(null);
-  const [page, setPage] = useState(1); // Manage current page state
+  const [page, setPage] = useState(1);
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
 
-  // Function to fetch data from the API
   const fetchTweets = (pageNumber) => {
-    axios.get(`/?page=${pageNumber}`)
+    axios.get(`${API_URL}/?page=${pageNumber}`)
       .then((response) => {
-        // Ensure response.data.tweets exists before setting state
         const { tweets = [], next_page_url, prev_page_url } = response.data;
         setTweets(tweets);
         setPrevPageUrl(prev_page_url);
         setNextPageUrl(next_page_url);
-        setPage(pageNumber); // Update the current page
+        setPage(pageNumber);
       })
       .catch((error) => {
         console.error('Error fetching tweets:', error);
-        // Optionally handle error by resetting tweets or showing a message
       });
   };
 

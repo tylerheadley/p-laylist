@@ -7,14 +7,17 @@ const Login = () => {
     password: ''
   });
   const [error, setError] = useState('');
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/login', formData);
+      const response = await axios.post(`${API_URL}/login`, new URLSearchParams(formData), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
       alert(response.data.message);
     } catch (err) {
-      setError(err.response.data.error);
+      setError(err.response?.data?.error || "An unexpected error occurred");
     }
   };
 
@@ -47,36 +50,3 @@ const Login = () => {
 };
 
 export default Login;
-
-// {% extends 'base.html' %}
-
-// {% block content %}
-// <div class="centered-container">
-//     <h2 class="heading">Login</h2>
-
-//     {% if not login_default %}
-//         {% if not logged_in %}
-//         <p class="error-message">ERROR: your username and password are incorrect. Please try again.</p>
-//         {% else %}
-//         <p class="success-message">Login Successful</p>
-//         {% endif %}
-//     {% endif %}
-
-//     <form class="login-form" action="/login" method="POST">
-//         <table>
-//             <tr>
-//                 <td>username</td>
-//                 <td><input type="text" required name="username"></td>
-//             </tr>
-//             <tr>
-//                 <td>password</td>
-//                 <td><input type="password" required name="password"></td>
-//             </tr>
-//             <tr>
-//                 <td></td>
-//                 <td><input type="submit" value="Login"></td>
-//             </tr>
-//         </table>
-//     </form>
-// </div>
-// {% endblock %}
