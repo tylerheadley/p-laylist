@@ -18,14 +18,15 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 import sqlalchemy
 import psycopg2
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,text
 from werkzeug.utils import secure_filename
-
+from flask import jsonify, request
+import hashlib 
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
-
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/api/tweets", methods=["GET"])
 def root():
@@ -82,33 +83,42 @@ def root():
     })
 
 def are_credentials_good(username, password):
-    db_url = "postgresql://postgres:pass@postgres:5432"
-    engine = sqlalchemy.create_engine(db_url, connect_args={
-        'application_name': '__init__.py root()',
-    })
-    connection = engine.connect()
+    """Checks if the provided username and password match a user in the database."""
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()  # Hashing for security
+    query = """
+        SELECT screen_name 
+        FROM users 
+        WHERE screen_name = :username AND password = :password
+    """
 
-    # index only scan using idx_username_password
-    result = connection.execute(text(
-        "SELECT screen_name, password "
-        "FROM users "
-        "WHERE screen_name=:username AND password=:password "
-    ), {'username': username, 'password': password})
-
-    if len(result.fetchall()) == 1:
-        return True
-    else:
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(query), {'username': username, 'password': hashed_password}
+            ).fetchone()
+            return result is not None
+    except Exception as e:
+        print(f"Database error: {e}")
         return False
 
-
 def is_logged_in():
+    """Verifies if the current session is logged in based on cookies."""
     username = request.cookies.get('username')
     password = request.cookies.get('password')
+    
+    if not username or not password:
+        return False
 
     return are_credentials_good(username, password)
 
+@app.route("/check_logged_in", methods=["GET"])
+def check_logged_in():
+    """API endpoint to check if the user is logged in."""
+    logged_in = is_logged_in()
+    return jsonify({"loggedIn": logged_in})
 
-# @app.route("/login", methods=['GET', 'POST'])
+
+@app.route("/login", methods=['GET', 'POST'])
 def login():
 
     username = request.form.get('username')
@@ -131,16 +141,12 @@ def login():
 
 @app.route("/logout")
 def logout():
-    template = render_template(
-        'logout.html',
-        logged_in=False)
-
-    response = make_response(template)
+    response = jsonify({'message': 'Logged out successfully'})
 
     response.set_cookie('username', '', expires=0)
     response.set_cookie('password', '', expires=0)
 
-    return jsonify({'message': 'Logged out successfully'})
+    return response
 
 @app.route("/create_account", methods=['POST'])
 def create_account():
@@ -187,48 +193,6 @@ def create_account():
         return jsonify({"error": "Passwords do not match"}), 400
 
     return jsonify({"error": "Invalid input"}), 400
-# @app.route("/create_account", methods=['GET', 'POST'])
-# def create_account():
-
-#     form = request.form.to_dict()
-
-#     username_exists = False
-#     passwords_different = False
-
-#     if form and form['password1'] == form['password2']:
-#         try:
-#             db_url = "postgresql://postgres:pass@postgres:5432"
-#             engine = sqlalchemy.create_engine(db_url, connect_args={
-#                 'application_name': '__init__.py create_account()',
-#             })
-#             connection = engine.connect()
-
-#             connection.execute(text(
-#                 "INSERT INTO users (name, screen_name, password) "
-#                 "VALUES (:name, :username, :password1);"
-#             ), form)
-
-#             connection.commit()
-
-#             connection.close()
-
-#             response = make_response(redirect(url_for('root')))
-#             response.set_cookie('username', form['username'])
-#             response.set_cookie('password', form['password1'])
-#             return response
-
-#         except IntegrityError as e:
-#             print("error inserting user:", e)
-#             username_exists = True
-#     elif form:
-#         passwords_different = True
-
-#     return render_template(
-#         'create_account.html',
-#         username_exists=username_exists,
-#         passwords_different=passwords_different,
-#         logged_in=is_logged_in())
-
 
 @app.route("/create_message", methods=['GET', 'POST'])
 def create_message():

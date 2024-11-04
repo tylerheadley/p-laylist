@@ -4,12 +4,14 @@
 * {
     margin:0px;
     padding:0px;
+    
 }
+
 
 .flex-container {
     display: flex;
     flex-direction:row;
-    height:90vh;
+    height:93vh;
     background-color: #F8F8F9;
     margin:auto;
 }
@@ -66,8 +68,7 @@
 }
 
 .flex-container h2 {
-    font-size:3em;
-    
+    font-size:3em;    
     font-family: 'Martel', serif;
 }
 
@@ -97,12 +98,12 @@
     border: 3px solid #2C365E ;
     
 }
-.submit-button {
+#submit-button {
     background-color: #2C365E;
     font-size:1.7em;
     font-weight:500;
     font-family: "Nunito Sans", sans-serif;
-    
+    text-transform:none;
     color:#F8F8F9;
     padding:20px 15%;
     border-radius: 10px;
@@ -115,4 +116,10 @@
 
 .pale-white {
     color:#F8F8F9;
+}
+
+.error-message {
+    color:#A11717;
+    font-weight:bold;
+    margin:10px 0px;
 }
