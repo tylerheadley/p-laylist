@@ -1,4 +1,5 @@
 .env.prod.db
+.env
 
 ./services/web/env/
 

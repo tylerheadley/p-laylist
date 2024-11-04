@@ -9,8 +9,6 @@ const CreateAccount = () => {
     password2: ''
   });
   const [error, setError] = useState('');
-
-  // Set the API URL dynamically from environment variables or default to localhost
   const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
 
   const handleSubmit = async (e) => {
@@ -18,6 +16,8 @@ const CreateAccount = () => {
     try {
       const response = await axios.post(`${API_URL}/create_account`, formData);
       alert(response.data.message);
+      // Redirect to Spotify OAuth flow after account creation
+      window.location.href = `${API_URL}/spotify_authorize`;
     } catch (err) {
       setError(err.response?.data?.error || 'An error occurred');
     }

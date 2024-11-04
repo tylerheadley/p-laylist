@@ -8,7 +8,9 @@ CREATE TABLE users (
     id_users BIGSERIAL PRIMARY KEY,
     screen_name TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    password TEXT
+    password TEXT,
+    spotify_access_token TEXT UNIQUE
+    spotify_refresh_token TEXT UNIQUE
 );
 CREATE INDEX idx_username_password ON users(screen_name, password);
 
