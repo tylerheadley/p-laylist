@@ -1,7 +1,3 @@
-CREATE EXTENSION rum;
-
-\set ON_ERROR_STOP on
-
 BEGIN;
 
 --Users Table
