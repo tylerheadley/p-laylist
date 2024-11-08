@@ -1,5 +1,8 @@
 .env.prod.db
 
+.venv
+.conda
+
 ./services/web/env/
 
 *.swp
