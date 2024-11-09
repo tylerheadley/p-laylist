@@ -1,5 +1,5 @@
 .env.prod.db
-.env
+.env.spotify
 
 ./services/web/env/
 

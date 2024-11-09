@@ -1,7 +1,5 @@
 CREATE EXTENSION rum;
 
-\set ON_ERROR_STOP on
-
 BEGIN;
 
 CREATE TABLE users (
@@ -9,9 +7,10 @@ CREATE TABLE users (
     screen_name TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     password TEXT,
-    spotify_access_token TEXT UNIQUE
+    spotify_access_token TEXT UNIQUE,
     spotify_refresh_token TEXT UNIQUE
 );
+
 CREATE INDEX idx_username_password ON users(screen_name, password);
 
 CREATE TABLE tweets (
