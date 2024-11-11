@@ -9,8 +9,8 @@ services:
     ports:
       - 1341:5000
     env_file:
-      - .env
       - ./.env.dev
+      - ./.env.spotify
     depends_on:
       - postgres
 

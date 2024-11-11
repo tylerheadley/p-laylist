@@ -14,6 +14,7 @@ import re
 import datetime
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+# from services.backend.project.config import Config
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import create_engine, text
 import sqlalchemy
@@ -26,22 +27,15 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-# Load environment variables for Spotify OAuth
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
-# SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-# SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-# SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
-SPOTIFY_CLIENT_ID ="82390cd580fb48978612854cf0f0a049"
-SPOTIFY_CLIENT_SECRET="45bbec5bf0ee406ca2d85ca09293ab71"
-SPOTIFY_REDIRECT_URI="http://localhost:1341/spotify_callback"
-# print("Client ID:", os.getenv("SPOTIFY_CLIENT_ID"))
-# print("Redirect URI:", os.getenv("SPOTIFY_REDIRECT_URI"))
-
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
 db_url = "postgresql://postgres:pass@postgres:5432"
 engine = create_engine(db_url, connect_args={'application_name': '__init__.py'})
+SPOTIFY_CLIENT_ID =  app.config["SPOTIFY_CLIENT_ID"]
+SPOTIFY_REDIRECT_URI = app.config["SPOTIFY_REDIRECT_URI"]
+SPOTIFY_CLIENT_SECRET = app.config["SPOTIFY_CLIENT_SECRET"]
+
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -180,6 +174,7 @@ def create_account():
             response = make_response(jsonify({"message": "Account created successfully!"}), 201)
             response.set_cookie('username', data['username'], httponly=True, secure=False, samesite='None')
             response.set_cookie('password', data['password1'], httponly=True, secure=False, samesite='None')
+            response.headers["Location"] = "http://localhost:1341/link_music_app"
             return response
         except IntegrityError:
             return jsonify({"error": "Username already exists"}), 400
@@ -227,8 +222,8 @@ def spotify_callback():
                 {"access_token": access_token, "refresh_token": refresh_token, "username": username}
             )
             connection.commit()
-
-        return redirect("http://localhost:3000/?spotify_connected=1")
+        
+        return redirect("http://localhost:3000/link_music_app?spotify_connected=1")
     else:
         return jsonify({"error": "Failed to retrieve tokens"}), 400
 
