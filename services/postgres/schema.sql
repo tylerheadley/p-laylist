@@ -1,3 +1,5 @@
+CREATE EXTENSION rum;
+
 BEGIN;
 
 --Users Table
@@ -5,8 +7,16 @@ CREATE TABLE users (
     id_user BIGSERIAL PRIMARY KEY,
     screen_name TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    password TEXT
+    password TEXT,
+    spotify_access_token TEXT UNIQUE,
+    spotify_refresh_token TEXT UNIQUE
 );
+
+CREATE INDEX idx_username_password ON users(screen_name, password);
+
+CREATE TABLE tweets (
+    id_tweets BIGSERIAL PRIMARY KEY,
+    id_users BIGINT NOT NULL,
 
 --Artists Table
 CREATE TABLE artists (

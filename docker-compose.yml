@@ -10,13 +10,14 @@ services:
       - 1341:5000
     env_file:
       - ./.env.dev
+      - ./.env.spotify
     depends_on:
       - postgres
 
   postgres:
     build: services/postgres
     volumes:
-      - ./:/tmp/db
+      - ./services/postgres/schema.sql:/docker-entrypoint-initdb.d/01.sql
       - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_USER=postgres

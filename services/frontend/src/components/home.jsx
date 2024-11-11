@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 
 const Home = () => {
   const [tweets, setTweets] = useState([]);
   const [prevPageUrl, setPrevPageUrl] = useState(null);
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [page, setPage] = useState(1);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const location = useLocation();
+
   const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
 
   const fetchTweets = (pageNumber) => {
@@ -22,14 +26,18 @@ const Home = () => {
       });
   };
 
-  // Fetch data on component mount
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('spotify_connected') === '1') {
+      setSpotifyConnected(true);
+    }
     fetchTweets(page);
-  }, [page]);
+  }, [page, location.search]);
 
   return (
     <div className="centered-container">
       <h2>Home Feed</h2>
+      {spotifyConnected && <p>Spotify connected successfully!</p>}
       <div className="tweets">
         {tweets.length > 0 ? (
           tweets.map((tweet, index) => (
@@ -46,7 +54,6 @@ const Home = () => {
           <p>No tweets available.</p>
         )}
       </div>
-
       <div className="pagination">
         {prevPageUrl && <button onClick={() => fetchTweets(page - 1)}>Previous Page</button>}
         {nextPageUrl && <button onClick={() => fetchTweets(page + 1)}>Next Page</button>}

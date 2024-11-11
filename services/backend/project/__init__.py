@@ -14,18 +14,29 @@ import re
 import datetime
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+# from services.backend.project.config import Config
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 import sqlalchemy
 import psycopg2
 from sqlalchemy import create_engine,text
 from werkzeug.utils import secure_filename
-from flask import jsonify, request
-import hashlib 
+import hashlib
+import requests
+from dotenv import load_dotenv
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
+db_url = "postgresql://postgres:pass@postgres:5432"
+engine = create_engine(db_url, connect_args={'application_name': '__init__.py'})
+SPOTIFY_CLIENT_ID =  app.config["SPOTIFY_CLIENT_ID"]
+SPOTIFY_REDIRECT_URI = app.config["SPOTIFY_REDIRECT_URI"]
+SPOTIFY_CLIENT_SECRET = app.config["SPOTIFY_CLIENT_SECRET"]
+
+
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/api/tweets", methods=["GET"])
@@ -37,10 +48,6 @@ def root():
 
     per_page = 20  # Number of messages per page
 
-    db_url = "postgresql://postgres:pass@postgres:5432"
-    engine = sqlalchemy.create_engine(db_url, connect_args={
-        'application_name': '__init__.py root()',
-    })
     connection = engine.connect()
 
     # Calculate OFFSET based on the page number
@@ -148,51 +155,77 @@ def logout():
 
     return response
 
+# Database connection setup
+db_url = "postgresql://postgres:pass@postgres:5432"
+engine = create_engine(db_url, connect_args={'application_name': '__init__.py create_account()'})
+
 @app.route("/create_account", methods=['POST'])
 def create_account():
-    data = request.json  # Expecting JSON data from React
-
-    # Default states
-    username_exists = False
-    passwords_different = False
-
+    data = request.json
     if data and data['password1'] == data['password2']:
         try:
-            # Database connection
-            db_url = "postgresql://postgres:pass@postgres:5432"
-            engine = create_engine(db_url, connect_args={
-                'application_name': '__init__.py create_account()',
-            })
-            connection = engine.connect()
-
-            # Insert user into database
-            connection.execute(text(
-                "INSERT INTO users (name, screen_name, password) "
-                "VALUES (:name, :username, :password1);"
-            ), data)
-
-            connection.commit()
-            connection.close()
-
-            # Create response with cookie (username and password)
+            # Insert user data
+            with engine.connect() as connection:
+                connection.execute(text(
+                    "INSERT INTO users (name, screen_name, password) "
+                    "VALUES (:name, :username, :password1)"
+                ), data)
+                connection.commit()
             response = make_response(jsonify({"message": "Account created successfully!"}), 201)
-            response.set_cookie('username', data['username'])
-            response.set_cookie('password', data['password1'])
-
+            response.set_cookie('username', data['username'], httponly=True, secure=False, samesite='None')
+            response.set_cookie('password', data['password1'], httponly=True, secure=False, samesite='None')
+            response.headers["Location"] = "http://localhost:1341/link_music_app"
             return response
-
-        except IntegrityError as e:
-            # Handle case where username already exists
-            print("Error inserting user:", e)
-            username_exists = True
+        except IntegrityError:
             return jsonify({"error": "Username already exists"}), 400
-
-    elif data:
-        # Passwords don't match
-        passwords_different = True
+    else:
         return jsonify({"error": "Passwords do not match"}), 400
 
-    return jsonify({"error": "Invalid input"}), 400
+@app.route("/spotify_authorize")
+def spotify_authorize():
+    scopes = "user-read-private user-read-email"
+    auth_url = (
+        f"https://accounts.spotify.com/authorize?response_type=code"
+        f"&client_id={SPOTIFY_CLIENT_ID}&scope={scopes}&redirect_uri={SPOTIFY_REDIRECT_URI}"
+    )
+    print("Authorization URL:", auth_url)
+    return redirect(auth_url)
+
+@app.route("/spotify_callback")
+def spotify_callback():
+    code = request.args.get("code")
+    if not code:
+        return jsonify({"error": "Authorization failed"}), 400
+
+    # Exchange code for tokens
+    token_url = "https://accounts.spotify.com/api/token"
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": SPOTIFY_REDIRECT_URI,
+        "client_id": SPOTIFY_CLIENT_ID,
+        "client_secret": SPOTIFY_CLIENT_SECRET,
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+    response = requests.post(token_url, data=data, headers=headers)
+    if response.status_code == 200:
+        tokens = response.json()
+        access_token = tokens['access_token']
+        refresh_token = tokens['refresh_token']
+        
+        # Save the tokens to the database (assuming user is already authenticated)
+        username = request.cookies.get('username')
+        with engine.connect() as connection:
+            connection.execute(
+                text("UPDATE users SET spotify_access_token = :access_token, spotify_refresh_token = :refresh_token WHERE screen_name = :username"),
+                {"access_token": access_token, "refresh_token": refresh_token, "username": username}
+            )
+            connection.commit()
+        
+        return redirect("http://localhost:3000/link_music_app?spotify_connected=1")
+    else:
+        return jsonify({"error": "Failed to retrieve tokens"}), 400
 
 @app.route("/create_message", methods=['GET', 'POST'])
 def create_message():
@@ -322,16 +355,6 @@ def search():
         prev_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1)
 
     return jsonify(tweets=tweets, next_page_url=next_page_url, prev_page_url=prev_page_url)
-    # return jsonify({
-    #     'tweets': [{
-    #         'user_name': tweet.user_name,
-    #         'screen_name': tweet.screen_name,
-    #         'text': tweet.text,
-    #         'created_at': tweet.created_at
-    #     } for tweet in tweets],
-    #     'next_page_url': next_page_url,
-    #     'prev_page_url': prev_page_url
-    # })
 
 @app.route('/trending')
 def trending():
@@ -371,26 +394,3 @@ def trending():
             'url': tag.url
         } for tag in tags]
     })
-# @app.route("/static/<path:filename>")
-# def staticfiles(filename):
-#     return send_from_directory(app.config["STATIC_FOLDER"], filename)
-#
-#
-# @app.route("/media/<path:filename>")
-# def mediafiles(filename):
-#     return send_from_directory(app.config["MEDIA_FOLDER"], filename)
-#
-#
-# @app.route("/upload", methods=["GET", "POST"])
-# def upload_file():
-#     if request.method == "POST":
-#         file = request.files["file"]
-#         filename = secure_filename(file.filename)
-#         file.save(os.path.join(app.config["MEDIA_FOLDER"], filename))
-#     return """
-#     <!doctype html>
-#     <title>upload new File</title>
-#     <form action="" method=post enctype=multipart/form-data>
-#       <p><input type=file name=file><input type=submit value=Upload>
-#     </form>
-#     """
