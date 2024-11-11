@@ -3,101 +3,45 @@ import librosa, librosa.display
 import matplotlib.pyplot as plt
 import json
 
+# You probably need to install ffmpeg (brew install ffmpeg on mac) to load .mp3 files
+# For the random samples, I'm using the gtzan/marysas genre dataset https://huggingface.co/datasets/marsyas/gtzan
+# TODO: load in gtzan dataset and complete the random samples dataset.
+
 FIG_SIZE = (15,10)
 
-file = "test_songs/song_1.mp3"
-json_path = "test_dataset/song_1.json"
+song_id = {2, 3, 4, 5}
 
-# load audio file with Librosa
-signal, sample_rate = librosa.load(file, sr=8000)
+for id in song_id:
+    file = f"test_songs/song_{id}.mp3" # path to the song to convert to spectrogram
+    npy_path = f"test_dataset/song_{id}.npy" # path to save the .npy nparray spectrogram
+    # load audio file with Librosa
+    signal, sample_rate = librosa.load(file, sr=8000)
 
-# WAVEFORM
-# display waveform
-plt.figure(figsize=FIG_SIZE)
-librosa.display.waveshow(signal, sr=sample_rate)
-plt.xlabel("Time (s)")
-plt.ylabel("Amplitude")
-plt.title("Waveform")
+    # STFT -> spectrogram
+    hop_length = 512 # in num. of samples
+    n_fft = 2048 # window in num. of samples
 
-# FFT -> power spectrum
-# perform Fourier transform
-fft = np.fft.fft(signal)
+    # calculate duration hop length and window in seconds
+    hop_length_duration = float(hop_length)/sample_rate
+    n_fft_duration = float(n_fft)/sample_rate
 
-# calculate abs values on complex numbers to get magnitude
-spectrum = np.abs(fft)
+    # perform stft
+    stft = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
 
-# create frequency variable
-f = np.linspace(0, sample_rate, len(spectrum))
+    # calculate abs values on complex numbers to get magnitude
+    spectrogram = np.abs(stft)
 
-# take half of the spectrum and frequency
-left_spectrum = spectrum[:int(len(spectrum)/2)]
-left_f = f[:int(len(spectrum)/2)]
+    # apply logarithm to cast amplitude to Decibels
+    log_spectrogram = librosa.amplitude_to_db(spectrogram) # returns numpy array
 
-# plot spectrum
-plt.figure(figsize=FIG_SIZE)
-plt.plot(left_f, left_spectrum, alpha=0.4)
-plt.xlabel("Frequency")
-plt.ylabel("Magnitude")
-plt.title("Power spectrum")
+    # Save as numpy .npy
+    np.save(npy_path,log_spectrogram)
 
+    # # MFCCs
+    # # extract 13 MFCCs
+    # MFCCs = librosa.feature.mfcc(signal, sample_rate, n_fft=n_fft, hop_length=hop_length, n_mfcc=13)
 
-# STFT -> spectrogram
-hop_length = 512 # in num. of samples
-n_fft = 2048 # window in num. of samples
-
-# calculate duration hop length and window in seconds
-hop_length_duration = float(hop_length)/sample_rate
-n_fft_duration = float(n_fft)/sample_rate
-
-print("STFT hop length duration is: {}s".format(hop_length_duration))
-print("STFT window duration is: {}s".format(n_fft_duration))
-
-# perform stft
-stft = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
-
-# calculate abs values on complex numbers to get magnitude
-spectrogram = np.abs(stft)
-
-# display spectrogram
-plt.figure(figsize=FIG_SIZE)
-librosa.display.specshow(spectrogram, sr=sample_rate, hop_length=hop_length)
-plt.xlabel("Time")
-plt.ylabel("Frequency")
-plt.colorbar()
-plt.title("Spectrogram")
-
-# apply logarithm to cast amplitude to Decibels
-# returns numpy array
-log_spectrogram = librosa.amplitude_to_db(spectrogram)
-# # Save as json
-# print(log_spectrogram)
-# with open(json_path, "w") as fp:
-#     json.dump(log_spectrogram.tolist(), fp)
-# Save as numpy .npy
-np.save("test_dataset/song_1.npy",log_spectrogram)
-
-
-plt.figure(figsize=FIG_SIZE)
-librosa.display.specshow(np.load("test_dataset/song_1.npy"), sr=sample_rate, hop_length=hop_length)
-plt.xlabel("Time")
-plt.ylabel("Frequency")
-plt.colorbar(format="%+2.0f dB")
-plt.title("Spectrogram (dB)")
-
-
-# # MFCCs
-# # extract 13 MFCCs
-# MFCCs = librosa.feature.mfcc(signal, sample_rate, n_fft=n_fft, hop_length=hop_length, n_mfcc=13)
-
-# # display MFCCs
-# plt.figure(figsize=FIG_SIZE)
-# librosa.display.specshow(MFCCs, sr=sample_rate, hop_length=hop_length)
-# plt.xlabel("Time")
-# plt.ylabel("MFCC coefficients")
-# plt.colorbar()
-# plt.title("MFCCs")
-
-# show plots
-plt.show()
+    # show plots
+    plt.show()
 
 
