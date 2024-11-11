@@ -1,0 +1,65 @@
+{
+    "songs": [
+      {
+        "album": "Abbey Road",
+        "title": "Come Together",
+        "artist": "The Beatles",
+        "duration": "4:20"
+      },
+      {
+        "album": "Thriller",
+        "title": "Billie Jean",
+        "artist": "Michael Jackson",
+        "duration": "4:54"
+      },
+      {
+        "album": "Back in Black",
+        "title": "Hells Bells",
+        "artist": "AC/DC",
+        "duration": "5:12"
+      },
+      {
+        "album": "Rumours",
+        "title": "Go Your Own Way",
+        "artist": "Fleetwood Mac",
+        "duration": "3:43"
+      },
+      {
+        "album": "Dark Side of the Moon",
+        "title": "Time",
+        "artist": "Pink Floyd",
+        "duration": "7:06"
+      },
+      {
+        "album": "The Marshall Mathers LP",
+        "title": "Stan",
+        "artist": "Eminem",
+        "duration": "6:44"
+      },
+      {
+        "album": "Born to Run",
+        "title": "Thunder Road",
+        "artist": "Bruce Springsteen",
+        "duration": "4:49"
+      },
+      {
+        "album": "21",
+        "title": "Rolling in the Deep",
+        "artist": "Adele",
+        "duration": "3:48"
+      },
+      {
+        "album": "Hotel California",
+        "title": "Hotel California",
+        "artist": "Eagles",
+        "duration": "6:30"
+      },
+      {
+        "album": "A Night at the Opera",
+        "title": "Bohemian Rhapsody",
+        "artist": "Queen",
+        "duration": "5:55"
+      }
+    ]
+  }
+  

@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import json
 
 # You probably need to install ffmpeg (brew install ffmpeg on mac) to load .mp3 files
+# For the random samples, I'm using the gtzan/marysas genre dataset https://huggingface.co/datasets/marsyas/gtzan
+# TODO: load in gtzan dataset and complete the random samples dataset.
 
 FIG_SIZE = (15,10)
 
