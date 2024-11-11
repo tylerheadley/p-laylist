@@ -1,0 +1,109 @@
+.centered-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f2f5;
+  }
+  
+  .login-box {
+    background-color: #fff;
+    padding: 30px;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .heading {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+  }
+  
+  .error-message {
+    color: red;
+    margin-bottom: 10px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+  }
+  
+  .submit-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1em;
+    cursor: pointer;
+  }
+  
+  .submit-button:hover {
+    background-color: #357ab7;
+  }
+  
+  .separator {
+    margin: 20px 0;
+    font-size: 0.9em;
+    color: #888;
+  }
+  
+  .social-login {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  
+  .google-button, .spotify-button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  
+  .google-button {
+    background-color: #db4437;
+  }
+  
+  .google-button:hover {
+    background-color: #c33225;
+  }
+  
+  .spotify-button {
+    background-color: #1db954;
+  }
+  
+  .spotify-button:hover {
+    background-color: #14803c;
+  }
+  
+  .additional-options {
+    margin-top: 15px;
+    font-size: 0.9em;
+  }
+  
+  .additional-options p {
+    margin: 5px 0;
+  }
+  
