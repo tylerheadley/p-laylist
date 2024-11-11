@@ -2,6 +2,12 @@ import numpy as np
 import librosa, librosa.display
 import matplotlib.pyplot as plt
 import json
+import kagglehub
+
+# Download latest version
+path = kagglehub.dataset_download("andradaolteanu/gtzan-dataset-music-genre-classification")
+
+print("Path to dataset files:", path)
 
 # You probably need to install ffmpeg (brew install ffmpeg on mac) to load .mp3 files
 # For the random samples, I'm using the gtzan/marysas genre dataset https://huggingface.co/datasets/marsyas/gtzan
