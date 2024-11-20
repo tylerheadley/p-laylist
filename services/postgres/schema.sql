@@ -5,7 +5,9 @@ CREATE TABLE users (
     id_user BIGSERIAL PRIMARY KEY,
     screen_name TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    password TEXT
+    password TEXT,
+    -- Number of recommendations should start at 0
+    record-mmendations INT DEFAULT 0
 );
 
 --Artists Table
