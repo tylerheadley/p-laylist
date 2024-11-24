@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Search = () => {
+const Library = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [tweets, setTweets] = useState([]);
     const [prevPageUrl, setPrevPageUrl] = useState(null);
@@ -48,4 +48,4 @@ const Search = () => {
     );
 };
 
-export default Search;
+export default Library;

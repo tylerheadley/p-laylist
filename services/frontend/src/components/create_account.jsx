@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './create_account.css'
 import Button from '@mui/material/Button';
+import LinkMusic from './link_music_app';
 
 
 const CreateAccount = () => {
@@ -82,7 +83,6 @@ const CreateAccount = () => {
           {error && <p className="error-message">{error}</p>}
             <Button variant="contained" type ='submit' id='submit-button'>Sign Up</Button>
         
-          
         
       </form>
       </div>

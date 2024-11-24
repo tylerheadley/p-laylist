@@ -44,9 +44,9 @@ import './nav_bar.css'
     <Link to="/" className='logo '><img src='p-laylist-logo-white.svg'/><h2>p-laylist</h2></Link>
   <nav className='nav-bar'>
     <Link to="/" className={isActive('/')}>Home</Link>
-    <Link to="/search" className={isActive('/search')}>Search</Link>
-    <Link to="/trending" className={isActive('/trending')}>Trending</Link>
-    <Link to="/create_message" className={isActive('/create_message')}>Create Message</Link>
+    <Link to="/library" className={isActive('/library')}>Library</Link>
+    <Link to="/friends" className={isActive('/friends')}>Friends</Link>
+    
     {loggedIn ? (
       <>
         <Dropdown

@@ -16,8 +16,8 @@ CREATE INDEX idx_username_password ON users(screen_name, password);
 
 CREATE TABLE tweets (
     id_tweets BIGSERIAL PRIMARY KEY,
-    id_users BIGINT NOT NULL,
-
+    id_users BIGINT NOT NULL
+);
 --Artists Table
 CREATE TABLE artists (
     id_artist BIGSERIAL PRIMARY KEY,

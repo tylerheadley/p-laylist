@@ -1,9 +1,6 @@
 .env.prod.db
 .env.spotify
 
-.venv
-.conda
-
 ./services/web/env/
 
 *.swp

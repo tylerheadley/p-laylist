@@ -7,9 +7,11 @@ from flask import (
     render_template,
     url_for,
     make_response,
-    redirect
+    redirect,
+    session
 )
 import bleach
+import json
 import re
 import datetime
 from flask_cors import CORS
@@ -37,7 +39,7 @@ SPOTIFY_REDIRECT_URI = app.config["SPOTIFY_REDIRECT_URI"]
 SPOTIFY_CLIENT_SECRET = app.config["SPOTIFY_CLIENT_SECRET"]
 
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 @app.route("/api/tweets", methods=["GET"])
 def root():
@@ -88,6 +90,30 @@ def root():
         'next_page_url': next_page_url,
         'prev_page_url': prev_page_url
     })
+
+@app.route("/api/songs", methods=["GET"])
+def song_data():
+    
+    try:
+        # Define the path to your JSON file
+        file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+       
+        # Open and read the JSON file
+        with open(file_path, "r") as file:
+            data = json.load(file)  # Parse the JSON data
+
+        # Return the data as a JSON response
+        return jsonify(data)
+    
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON format"}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
 
 def are_credentials_good(username, password):
     """Checks if the provided username and password match a user in the database."""
@@ -161,25 +187,46 @@ engine = create_engine(db_url, connect_args={'application_name': '__init__.py cr
 
 @app.route("/create_account", methods=['POST'])
 def create_account():
-    data = request.json
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password1')
+    hashed_password = generate_password_hash(password)
     if data and data['password1'] == data['password2']:
         try:
-            # Insert user data
+            # Attempt to insert user data into the database
             with engine.connect() as connection:
                 connection.execute(text(
-                    "INSERT INTO users (name, screen_name, password) "
-                    "VALUES (:name, :username, :password1)"
-                ), data)
-                connection.commit()
-            response = make_response(jsonify({"message": "Account created successfully!"}), 201)
-            response.set_cookie('username', data['username'], httponly=True, secure=False, samesite='None')
-            response.set_cookie('password', data['password1'], httponly=True, secure=False, samesite='None')
-            response.headers["Location"] = "http://localhost:1341/link_music_app"
+                    "INSERT INTO users (name, screen_name, password) VALUES (:name, :username, :password)"
+                ), {'name': username, 'username': username, 'password': hashed_password})
+            
+            # Store the username in the session after account creation
+            session['username'] = username
+            print("create acc", session.get('username'))
+            print("username create", username)
+
+            # Check if Spotify account is linked
+            spotify_connected = check_spotify_linked(username)
+
+            # Prepare the response and set cookies securely
+            response = make_response(jsonify({'message': 'Account created successfully!'}), 201)
+            # response.set_cookie('username', username, httponly=True, secure=False, samesite='Lax')
+            
+            # Redirect to link music if Spotify is not linked
+            if not spotify_connected:
+                response.headers['Location'] = url_for('link_music_app', spotify_connected='0')
+            else:
+                response.headers['Location'] = url_for('home')
+
             return response
+
         except IntegrityError:
             return jsonify({"error": "Username already exists"}), 400
+        except Exception as e:
+            print(f"Database error: {e}")
+            return jsonify({"error": "Account creation failed"}), 400
     else:
         return jsonify({"error": "Passwords do not match"}), 400
+
 
 @app.route("/spotify_authorize")
 def spotify_authorize():

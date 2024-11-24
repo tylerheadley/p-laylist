@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const Trending = () => {
+const Friends = () => {
     const [tags, setTags] = useState([]);
 
     const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
@@ -43,4 +43,4 @@ const Trending = () => {
     );
 };
 
-export default Trending;
+export default Friends;

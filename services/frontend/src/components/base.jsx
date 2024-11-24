@@ -22,7 +22,7 @@ const NavBar = () => {
         <h1 className="navbar-title">Big Data Twitter Clone</h1>
         <ol className="navbar-links">
           <li><Link to="/">Home</Link></li>
-          <li><Link to="/search">Search</Link></li>
+          <li><Link to="/library">Library</Link></li>
           <li><Link to="/trending">Trending</Link></li>
           {loggedIn ? (
             <>
