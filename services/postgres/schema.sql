@@ -14,7 +14,8 @@ CREATE TABLE users (
 CREATE TABLE artists (
     id_artist BIGSERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
-    genre TEXT NOT NULL,
+    id_genre TEXT NOT NULL,
+    FOREIGN KEY (id_genre) REFERENCES genre(id_genre)
     description TEXT
 );
 
@@ -81,7 +82,7 @@ CREATE TABLE friends {
     added_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id_user, id_friend),
     FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
-    FOREIGN KEY (id_friend) REFERENCES songs(id_song) ON DELETE CASCADE,
+    FOREIGN KEY (id_friend) REFERENCES users(id_user) ON DELETE CASCADE,
 }
 
 COMMIT;
