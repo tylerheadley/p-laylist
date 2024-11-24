@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './components/home';
 import Search from './components/search';
-import Trending from './components/trending';
 import CreateMessage from './components/create_message';
 import Login from './components/login';
 import Logout from './components/logout';
@@ -20,7 +19,7 @@ const App = () => {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const response = await axios.get(`${API_URL}/is_logged_in`);
+        const response = await axios.get(`${API_URL}/check_logged_in`);
         setLoggedIn(response.data.loggedIn);
       } catch (error) {
         console.error("Error checking login status:", error);
@@ -37,7 +36,6 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
-          <Route path="/trending" element={<Trending />} />
           <Route path="/create_message" element={<CreateMessage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/logout" element={<Logout />} />

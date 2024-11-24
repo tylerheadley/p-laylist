@@ -15,7 +15,7 @@ import re
 import datetime
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-# from services.backend.project.config import Config
+from flask_session import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import create_engine, text
 import sqlalchemy
@@ -24,6 +24,7 @@ from sqlalchemy import create_engine,text
 from werkzeug.utils import secure_filename
 import hashlib
 import requests
+import jwt
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -32,9 +33,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
-app.config['SECRET_KEY'] = 'a_secure_random_secret_key'
+app.config['SECRET_KEY'] = app.config["FLASK_SECRET_KEY"]
 app.config['SESSION_COOKIE_HTTPONLY'] = False
 app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem to persist sessions
+app.config['SESSION_PERMANENT'] = False   # Sessions are not permanent
+app.config['SESSION_USE_SIGNER'] = True   # Sign cookies for extra security
+Session(app)
 db = SQLAlchemy(app)
 db_url = "postgresql://postgres:pass@postgres:5432"
 engine = create_engine(db_url, connect_args={'application_name': '__init__.py'})
@@ -43,7 +48,7 @@ SPOTIFY_REDIRECT_URI = app.config["SPOTIFY_REDIRECT_URI"]
 SPOTIFY_CLIENT_SECRET = app.config["SPOTIFY_CLIENT_SECRET"]
 
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 @app.route("/api/tweets", methods=["GET"])
 def root():
@@ -95,6 +100,108 @@ def root():
         'prev_page_url': prev_page_url
     })
 
+
+@app.route('/create_account', methods=['POST'])
+def create_account():
+    session.clear()
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid data"}), 400
+
+    username = data.get('username')
+    password1 = data.get('password1')
+    password2 = data.get('password2')
+    name = data.get('name')
+
+    connection = engine.connect()
+    result = connection.execute(
+            text("SELECT id_users FROM users WHERE screen_name = :username"),
+            {'username': username}
+    ).fetchone()
+    if result:
+        return jsonify({"error": "Username already exists"}), 400
+
+    # Log incoming data (except passwords for security)
+    print(f"Received data: username={username}, name={name}")
+
+    hashed_password = generate_password_hash(password1)
+    
+    user_data = {
+        "username": username,
+        "name": name,
+        "hashed_password": hashed_password,
+    }
+
+    # Encode data in a JWT to pass to Spotify flow
+    token = jwt.encode(user_data, app.config["SECRET_KEY"], algorithm="HS256")
+    return jsonify({"redirect": f"http://localhost:1341/spotify_authorize?token={token}"}), 201
+
+
+def get_spotify_tokens(auth_code):
+    token_url = "https://accounts.spotify.com/api/token"
+    data = {
+        "grant_type": "authorization_code",
+        "code": auth_code,
+        "redirect_uri": SPOTIFY_REDIRECT_URI,
+        "client_id": SPOTIFY_CLIENT_ID,
+        "client_secret": SPOTIFY_CLIENT_SECRET,
+    }
+    response = requests.post(token_url, data=data)
+    if response.status_code != 200:
+        raise Exception("Spotify token request failed")
+    return response.json()
+
+@app.route("/spotify_callback")
+def spotify_callback():
+    state = request.args.get("state")  # Retrieve the token from the state parameter
+    if not state:
+        return jsonify({"error": "Missing token"}), 400
+
+    try:
+        user_data = jwt.decode(state, app.config["SECRET_KEY"], algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token expired"}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 400
+
+    code = request.args.get("code")
+    if not code:
+        return jsonify({"error": "Authorization failed"}), 400
+
+    # Request Spotify tokens...
+    tokens = get_spotify_tokens(code)
+    print("spotify tokens:", tokens)
+    print("name:", user_data["name"])
+    print("username:", user_data["username"])
+    print("password:", user_data["hashed_password"])
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(
+                    "INSERT INTO users (name, screen_name, password, spotify_access_token, spotify_refresh_token) "
+                    "VALUES (:name, :username, :password, :access_token, :refresh_token)"
+                ),
+                {
+                    "name": user_data["name"],
+                    "username": user_data["username"],
+                    "password": user_data["hashed_password"],
+                    "access_token": tokens["access_token"],
+                    "refresh_token": tokens["refresh_token"]
+                }
+            )
+            print("Insert result:", result.rowcount)
+
+            connection.commit()
+
+            connection.close()
+    except Exception as e:
+        return jsonify({"error": "Database save error"}), 500
+    
+
+    return redirect("http://localhost:3000")
+
+
 def are_credentials_good(username, password):
     query = "SELECT password FROM users WHERE screen_name = :username"
     try:
@@ -108,13 +215,16 @@ def are_credentials_good(username, password):
         print(f"Database error: {e}")
         return False
 
-def is_logged_in():
-    """Verify if the current session is logged in and check Spotify link status."""
-    username = session.get('username')  # Check if username is stored in session
-    if not username:
-        return False
-    
-    return check_spotify_linked(username)
+@app.route("/login", methods=['POST'])
+def login():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    if are_credentials_good(username, password):
+        session['username'] = username
+        return jsonify({"message": "Login successful!"}), 200
+    return jsonify({"error": "Invalid credentials"}), 401
+
 
 def check_spotify_linked(username):
     """Check if a user has linked their Spotify account."""
@@ -125,24 +235,15 @@ def check_spotify_linked(username):
         ).fetchone()
     return result is not None and result[0] is not None
 
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
-
-    if are_credentials_good(username, password):
-        session['username'] = username  # Store username in session instead of cookies
-        return jsonify({"message": "Login successful!"}), 200
-    else:
-        return jsonify({"error": "Invalid credentials"}), 401
-
 @app.route("/check_logged_in", methods=["GET"])
 def check_logged_in():
     # API endpoint to check if the user is logged in and if Spotify is linked
-    logged_in = is_logged_in()
+    username = session.get('username')
+    logged_in = False
     spotify_linked = False
+    if username:
+        logged_in = True
     if logged_in:
-        username = session.get('username')
         spotify_linked = check_spotify_linked(username)
     return jsonify({"loggedIn": logged_in, "spotifyLinked": spotify_linked})
 
@@ -150,50 +251,8 @@ def check_logged_in():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("http://localhost:1341/")
+    return redirect("http://localhost:3000/")
 
-
-@app.route('/create_account', methods=['POST'])
-def create_account():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password1')
-    hashed_password = generate_password_hash(password)
-    if data and data['password1'] == data['password2']:
-        try:
-            # Attempt to insert user data into the database
-            with engine.connect() as connection:
-                connection.execute(text(
-                    "INSERT INTO users (name, screen_name, password) VALUES (:name, :username, :password)"
-                ), {'name': username, 'username': username, 'password': hashed_password})
-            
-            # Store the username in the session after account creation
-            session['username'] = username
-            print("create acc", session.get('username'))
-            print("username create", username)
-
-            # Check if Spotify account is linked
-            spotify_connected = check_spotify_linked(username)
-
-            # Prepare the response and set cookies securely
-            response = make_response(jsonify({'message': 'Account created successfully!'}), 201)
-            # response.set_cookie('username', username, httponly=True, secure=False, samesite='Lax')
-            
-            # Redirect to link music if Spotify is not linked
-            if not spotify_connected:
-                response.headers['Location'] = url_for('link_music_app', spotify_connected='0')
-            else:
-                response.headers['Location'] = url_for('home')
-
-            return response
-
-        except IntegrityError:
-            return jsonify({"error": "Username already exists"}), 400
-        except Exception as e:
-            print(f"Database error: {e}")
-            return jsonify({"error": "Account creation failed"}), 400
-    else:
-        return jsonify({"error": "Passwords do not match"}), 400
 
 @app.route('/link_music_app', methods=['GET'])
 def link_music_app():
@@ -204,55 +263,22 @@ def link_music_app():
 
 @app.route("/spotify_authorize")
 def spotify_authorize():
+    token = request.args.get("token")
+    if not token:
+        return jsonify({"error": "Missing token"}), 400
+
     scopes = "user-read-private user-read-email"
     auth_url = (
         f"https://accounts.spotify.com/authorize?response_type=code"
         f"&client_id={SPOTIFY_CLIENT_ID}&scope={scopes}&redirect_uri={SPOTIFY_REDIRECT_URI}"
+        f"&state={token}"  # Include the token in the state parameter
     )
     return redirect(auth_url)
 
-@app.route("/spotify_callback")
-def spotify_callback():
-    code = request.args.get("code")
-    if not code:
-        return jsonify({"error": "Authorization failed"}), 400
-
-    token_url = "https://accounts.spotify.com/api/token"
-    data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": SPOTIFY_REDIRECT_URI,
-        "client_id": SPOTIFY_CLIENT_ID,
-        "client_secret": SPOTIFY_CLIENT_SECRET,
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-    response = requests.post(token_url, data=data, headers=headers)
-    if response.status_code == 200:
-        tokens = response.json()
-        access_token = tokens['access_token']
-        refresh_token = tokens['refresh_token']
-        
-        username = session.get('username')  # Get username from session
-        print("username", username)
-        if not username:
-            return redirect(url_for('login'))
-        print(f"Username in callback: {username}")
-
-        # Update tokens in the database
-        with engine.connect() as connection:
-            connection.execute(
-                text("UPDATE users SET spotify_access_token = :access_token, spotify_refresh_token = :refresh_token WHERE screen_name = :username"),
-                {"access_token": access_token, "refresh_token": refresh_token, "username": username}
-            )
-
-        return redirect(url_for('link_music_app', spotify_connected='1'))
-    else:
-        return jsonify({"error": "Failed to retrieve tokens"}), 400
 
 @app.route("/create_message", methods=['GET', 'POST'])
 def create_message():
-    if is_logged_in() and request.form.get('tweet'):
+    if request.form.get('tweet'):
 
         tweet_content = request.form.get('tweet')
 
@@ -378,42 +404,3 @@ def search():
         prev_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1)
 
     return jsonify(tweets=tweets, next_page_url=next_page_url, prev_page_url=prev_page_url)
-
-@app.route('/trending')
-def trending():
-    db_url = "postgresql://postgres:pass@postgres:5432"
-    engine = sqlalchemy.create_engine(db_url, connect_args={
-        'application_name': '__init__.py root()',
-    })
-    connection = engine.connect()
-
-    result = connection.execute(text(
-        "SELECT tag, count_tags "
-        "FROM tweet_tags_counts "
-        "ORDER BY count_tags DESC, tag "
-        "LIMIT 20; "
-    ))
-
-    connection.close()
-
-    rows = result.fetchall()
-
-    tags = []
-    i = 1
-    for row in rows:
-        tags.append({
-            'tag': row[0],
-            'count': row[1],
-            'rank': i,
-            'url': "/search?hashtag_search=1&search_query=" + row[0][1:]
-        })
-        i += 1
-
-    return jsonify({
-        'tags': [{
-            'rank': tag.rank,
-            'tag': tag.tag,
-            'count': tag.count,
-            'url': tag.url
-        } for tag in tags]
-    })
