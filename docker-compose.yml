@@ -10,7 +10,7 @@ services:
       - 1341:5000
     env_file:
       - ./.env.dev
-      - ./.env.spotify
+      - ./.env
     depends_on:
       - postgres
 
