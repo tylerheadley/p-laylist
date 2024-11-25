@@ -11,6 +11,7 @@ from flask import (
     session
 )
 import bleach
+import json
 import re
 import datetime
 from flask_cors import CORS
@@ -261,6 +262,7 @@ def link_music_app():
     return jsonify({'spotify_connected': spotify_connected})
 
 
+
 @app.route("/spotify_authorize")
 def spotify_authorize():
     token = request.args.get("token")
@@ -274,6 +276,34 @@ def spotify_authorize():
         f"&state={token}"  # Include the token in the state parameter
     )
     return redirect(auth_url)
+
+
+
+@app.route("/api/songs", methods=["GET"])
+def song_data():
+    
+    try:
+        # Define the path to your JSON file
+        file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+       
+        # Open and read the JSON file
+        with open(file_path, "r") as file:
+            data = json.load(file)  # Parse the JSON data
+
+        # Return the data as a JSON response
+        return jsonify(data)
+    
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON format"}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+
 
 
 @app.route("/create_message", methods=['GET', 'POST'])

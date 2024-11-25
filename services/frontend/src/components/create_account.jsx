@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './create_account.css'
+import Button from '@mui/material/Button';
+
+
 
 const CreateAccount = () => {
   const [formData, setFormData] = useState({ name: '', username: '', password1: '', password2: '' });
@@ -39,19 +43,63 @@ const CreateAccount = () => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+
   return (
-    <div className="centered-container">
-      <h2>Create Account</h2>
-      {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input type="text" name="name" placeholder="Name" required onChange={handleChange} />
-        <input type="text" name="username" placeholder="Username" required onChange={handleChange} />
-        <input type="password" name="password1" placeholder="Password" required onChange={handleChange} />
-        <input type="password" name="password2" placeholder="Confirm Password" required onChange={handleChange} />
-        <button type="submit" disabled={loading}>
-          {loading ? "Creating Account..." : "Create Account"}
-        </button>
+    <div className='page-background'>
+    <div className="flex-container">
+      {/* left side of page info */}
+      <div className = 'information-container'> 
+        <h2 className="heading pale-white bolded">Join P-laylist</h2>
+        {/* image with text besides it container*/}
+        <div className='info-bullet-points'>
+          <img src='Music-note.svg'/>
+          <h3 className = 'pale-white'>Get <span className='bolded'>free, personalized</span> music recommendations </h3>
+        </div>
+        <div className='info-bullet-points'>
+          <img src='Music-note.svg'/>
+          <h3 className = 'pale-white'><span className='bolded'>Connect</span> with friends and share music</h3>
+        </div>
+        <div className='info-bullet-points'>
+          <img src='Music-note.svg'/>
+          <h3 className = 'pale-white'>Expand your music taste with a <span className='bolded'>diverse</span> range of recommendations</h3>
+        </div>
+        
+
+      </div>
+      <div className='form-container'>
+      
+      <form className="login-form" onSubmit={handleSubmit}>
+      <h2 className="heading">Create Account</h2>
+        
+        
+          <div className='container-text-box'>
+            <h4 className='labelline'>Name</h4>
+            <input className='create-form-text-box' type="text" required name="name" onChange={handleChange} />
+            
+          </div>
+        
+          
+          <div className='container-text-box'>
+            <h4 className='labelline'>Username</h4>
+            <input className='create-form-text-box' type="text" required name="username" onChange={handleChange} />
+          </div>
+          
+          <div className='container-text-box'>
+            <h4 className='labelline'>Password</h4>
+            <input className='create-form-text-box' type="password" required name="password1" onChange={handleChange} />
+          </div>
+            
+          <div className='container-text-box'>
+            <h4 className='labelline'>Confirm Password</h4>
+            <input className='create-form-text-box' type="password" required name="password2" onChange={handleChange} />
+          </div>
+          {error && <p className="error-message">{error}</p>}
+            <Button variant="contained" type ='submit' id='submit-button'> {loading ? "Creating Account..." : "Sign Up "}</Button>
+        
+        
       </form>
+      </div>
+    </div>
     </div>
   );
 };

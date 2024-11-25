@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Martel:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+
+
+.song-container {
+    background-color: #F8F8F9;
+    height:93vh;
+    
+    padding:3% 10%
+}
+.title-section{
+    margin:20px;
+    display:flex;
+    align-items: center;
+    flex-direction: column;
+}
+.title {
+    font-family: 'Martel', serif;
+    font-size:2.5em;
+}
+p h3{
+    font-family: "Nunito Sans", sans-serif;
+}
+.subheading {
+    font-size:1.5em;
+    font-style: italic;
+}
+
+.songs-section {
+    display:flex;
+    align-items: left;
+    flex-direction: column;
+}
+
+.song-section-title {
+    font-size:1.5em;
+    
+}
+
+.song {
+    width:400px;
+    padding:40px;
+    border-radius: 10px;
+    background-color: #2C365E;
+    margin:30px;
+    color:#F8F8F9;
+    box-sizing: border-box;
+}
+.song-title {
+    font-size: 1.75em;
+    margin-bottom: 5px;
+}

@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './Login.css'; // Make sure to add this CSS file for styling
+import './login.css'; 
+import './create_account.css'; 
+import Button from '@mui/material/Button';
+import { Link, useLocation } from 'react-router-dom';
+
 
 const Login = () => {
+  const location = useLocation();
+  const isActive = (path) => location.pathname === path ? 'nav-link active' : 'nav-link';
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -27,30 +33,29 @@ const Login = () => {
   };
 
   return (
+    
     <div className="centered-container">
       <div className="login-box">
-        <h2 className="heading">Login</h2>
-        {error && <p className="error-message">{error}</p>}
+        <div className="title-section">
+          <h2 className="heading">Login</h2>
+          <p className="subheading">Welcome back! Login to continue to your personalized music experience.</p>
+          <img src='p-laylist-logo.svg' className='login-image'/>
+        </div>
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
-            <input type="email" required name="email" onChange={handleChange} />
+        
+            <input type="text" required name="email"  className='login-form-box' onChange={handleChange} placeholder='Username'/>
           </div>
           <div className="form-group">
-            <label>Password</label>
-            <input type="password" required name="password" onChange={handleChange} />
+          
+            <input type="password" required name="password" className='login-form-box' onChange={handleChange} placeholder='Password' />
           </div>
-          <button type="submit" className="submit-button">Login</button>
+          {error && <p className="error-message">{error}</p>}
+          <Button variant="contained" type ='submit' id='login-button'>Login</Button>
+          <div className='sign-up-section'>
+            <p>Don't have an account?</p><Link to="/create_account" className='link-sign'>Sign Up.</Link>
+          </div>
         </form>
-        <div className="separator">or</div>
-        <div className="social-login">
-          <button className="google-button">Login with Google</button>
-          <button className="spotify-button">Login with Spotify</button>
-        </div>
-        <div className="additional-options">
-          <p><a href="/forgot-password">Forgot your password?</a></p>
-          <p><a href="/create-account">Create an account</a></p>
-        </div>
       </div>
     </div>
   );

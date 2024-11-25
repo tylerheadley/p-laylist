@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './components/home';
-import Search from './components/search';
-import CreateMessage from './components/create_message';
+import Library from './components/library';
+import Friends from './components/friends';
 import Login from './components/login';
 import Logout from './components/logout';
 import CreateAccount from './components/create_account';
 import NavBar from './components/nav_bar';
 import LinkMusic from './components/link_music_app';
 import axios from 'axios';
+
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
 
@@ -35,8 +36,8 @@ const App = () => {
         <NavBar loggedIn={loggedIn} />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/create_message" element={<CreateMessage />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/friends" element={<Friends />} />
           <Route path="/login" element={<Login />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/create_account" element={<CreateAccount />} />
