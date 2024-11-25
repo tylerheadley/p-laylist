@@ -116,7 +116,7 @@ def create_account():
 
     connection = engine.connect()
     result = connection.execute(
-            text("SELECT id_users FROM users WHERE screen_name = :username"),
+            text("SELECT id_user FROM users WHERE screen_name = :username"),
             {'username': username}
     ).fetchone()
     if result:

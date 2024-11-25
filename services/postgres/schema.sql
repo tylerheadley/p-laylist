@@ -32,6 +32,7 @@ CREATE TABLE genre (
 CREATE TABLE albums (
   	id_album SERIAL PRIMARY KEY,
     id_artist BIGINT NOT NULL,
+    id_genre BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     text TEXT NOT NULL,
     FOREIGN KEY (id_artist) REFERENCES artists(id_artist),
@@ -43,6 +44,7 @@ CREATE TABLE songs (
   	id_song SERIAL PRIMARY KEY,
   	id_album BIGINT NOT NULL,
     id_artist BIGINT NOT NULL,
+    id_genre BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     text TEXT NOT NULL,
     FOREIGN KEY (id_artist) REFERENCES artists(id_artist),
