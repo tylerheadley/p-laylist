@@ -281,7 +281,6 @@ def spotify_authorize():
 
 @app.route("/api/songs", methods=["GET"])
 def song_data():
-    
     try:
         # Define the path to your JSON file
         file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
@@ -300,6 +299,11 @@ def song_data():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+@app.route("/friends")
+def friends():
+    # TODO: (YUKI) algorithm for finding friends
+    return None
 
 # @app.route("/create_message", methods=['GET', 'POST'])
 # def create_message():
