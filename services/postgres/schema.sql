@@ -1,3 +1,5 @@
+CREATE EXTENSION rum;
+
 BEGIN;
 
 --Users Table
@@ -7,10 +9,14 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     password TEXT,
     spotify_access_token TEXT UNIQUE,
+    spotify_refresh_token TEXT UNIQUE,
+    spotify_access_token TEXT UNIQUE,
     spotify_refresh_token TEXT UNIQUE
     -- Number of recommendations should start at 0
     record-mmendations INT DEFAULT 0
 );
+CREATE INDEX idx_username_password ON users(screen_name, password);
+
 
 --Artists Table
 CREATE TABLE artists (

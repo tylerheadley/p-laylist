@@ -1,4 +1,5 @@
 .env.prod.db
+.env
 
 ./services/web/env/
 
@@ -8,8 +9,9 @@
 *.swm
 *.pem
 .DS_Store
+
 ./services/frontend/node_modules
 services/frontend/node_modules
 ./services/frontend/node_modules/*
 services/frontend/node_modules/*
-*/node_modules/*
+**/node_modules/** 
