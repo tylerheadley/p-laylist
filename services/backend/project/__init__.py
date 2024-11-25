@@ -356,6 +356,38 @@ def trending():
                            tags=tags,
                            logged_in=is_logged_in())
 
+"""How to get id of the user here???"""
+def get_friends(id_user):
+    db_url = "postgresql://postgres:pass@postgres:5432"
+    engine = sqlalchemy.create_engine(db_url, connect_args={
+        'application_name': '__init__.py root()',
+    })
+    connection = engine.connect()
+
+    query = """
+    SELECT f.id_friend, u.name, u.screen_name, u.recordmmendations
+    FROM friends f
+    JOIN user u ON f.id_friend = u.id_user
+    WHERE f.id_user = :user_id
+    """
+
+    result = connection.execute(text(query), {'user_id': id_user})
+    friends = result.fetchall()
+
+    connection.close()
+
+    friendsData = []
+    for friend in friends:
+        friendInfo = {
+            'id_friend': friend[0],
+            'screen_name': friend[1],
+            'recordmmendations': friend[3]
+        }
+
+        friendsData.append(friendInfo)
+    
+    return jsonify(friendsData)
+
 # @app.route("/static/<path:filename>")
 # def staticfiles(filename):
 #     return send_from_directory(app.config["STATIC_FOLDER"], filename)
