@@ -2,10 +2,12 @@ BEGIN;
 
 --Users Table
 CREATE TABLE users (
-    id_user BIGSERIAL PRIMARY KEY,
+    id_users BIGSERIAL PRIMARY KEY,
     screen_name TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     password TEXT,
+    spotify_access_token TEXT UNIQUE,
+    spotify_refresh_token TEXT UNIQUE
     -- Number of recommendations should start at 0
     record-mmendations INT DEFAULT 0
 );
