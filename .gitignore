@@ -1,6 +1,12 @@
 .env.prod.db
 .env
 
+.vscode/*
+.vscode
+
+.venv
+.conda
+
 ./services/web/env/
 
 *.swp
@@ -9,6 +15,7 @@
 *.swm
 *.pem
 .DS_Store
+
 ./services/frontend/node_modules
 services/frontend/node_modules
 ./services/frontend/node_modules/*

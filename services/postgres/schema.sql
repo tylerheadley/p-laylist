@@ -2,42 +2,80 @@ CREATE EXTENSION rum;
 
 BEGIN;
 
+--Users Table
 CREATE TABLE users (
-    id_users BIGSERIAL PRIMARY KEY,
+    id_user BIGSERIAL PRIMARY KEY,
     screen_name TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     password TEXT,
     spotify_access_token TEXT UNIQUE,
     spotify_refresh_token TEXT UNIQUE
 );
-
 CREATE INDEX idx_username_password ON users(screen_name, password);
 
-CREATE TABLE tweets (
-    id_tweets BIGSERIAL PRIMARY KEY,
-    id_users BIGINT NOT NULL,
+
+--Artists Table
+CREATE TABLE artists (
+    id_artist BIGSERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    genre TEXT NOT NULL,
+    description TEXT
+);
+
+-- Genres Table
+CREATE TABLE genre (
+    id_genre SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+-- Album Table
+CREATE TABLE albums (
+  	id_album SERIAL PRIMARY KEY,
+    id_artist BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     text TEXT NOT NULL,
-    lang TEXT,
-    FOREIGN KEY (id_users) REFERENCES users(id_users)
+    FOREIGN KEY (id_artist) REFERENCES artists(id_artist),
+  	FOREIGN KEY (id_genre) REFERENCES genre(id_genre)
 );
-CREATE INDEX idx_tweets_id_users ON tweets(id_users); -- not sure if this helps the join
-CREATE INDEX idx_created_at on tweets(created_at);
-CREATE INDEX idx_tweets_fts ON tweets USING rum(to_tsvector('english', text));
 
-CREATE TABLE tweet_tags (
-    id_tweets BIGINT,
-    tag TEXT,
-    PRIMARY KEY (id_tweets, tag),
-    FOREIGN KEY (id_tweets) REFERENCES tweets(id_tweets)
+-- Songs Table
+CREATE TABLE songs (
+  	id_song SERIAL PRIMARY KEY,
+  	id_album BIGINT NOT NULL,
+    id_artist BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    text TEXT NOT NULL,
+    FOREIGN KEY (id_artist) REFERENCES artists(id_artist),
+  	FOREIGN KEY (id_album) REFERENCES albums(id_album),
+  	FOREIGN KEY (id_genre) REFERENCES genre(id_genre)
 );
-CREATE INDEX idx_tweet_tags_tag_id_tweets ON tweet_tags (tag, id_tweets);
 
-CREATE MATERIALIZED VIEW tweet_tags_counts AS
-SELECT tag, COUNT(id_tweets) AS count_tags
-FROM tweet_tags
-GROUP BY tag;
+-- Playlists Table
+CREATE TABLE playlists (
+    id_playlist SERIAL PRIMARY KEY,
+    id_user BIGINT,
+    name TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+);
 
-CREATE INDEX idx_tweet_tags_counts ON tweet_tags_counts (count_tags desc, tag);
+-- Songs in Playlists Table
+CREATE TABLE playlist_songs (
+    id_playlist BIGINT,
+    id_song BIGINT,
+    added_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (id_playlist, id_song),
+    FOREIGN KEY (id_playlist) REFERENCES playlists(id_playlist) ON DELETE CASCADE,
+    FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
+);
+
+-- Songs Listened Table
+CREATE TABLE songs_listened (
+    id_user BIGINT NOT NULL,
+    id_song BIGINT NOT NULL,
+    listened_at TIMESTAMPTZ NOT NULL,
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
+    FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
+);
 
 COMMIT;
