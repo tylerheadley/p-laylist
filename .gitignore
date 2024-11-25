@@ -1,5 +1,5 @@
 .env.prod.db
-.env.spotify
+.env
 
 ./services/web/env/
 
@@ -13,4 +13,4 @@
 services/frontend/node_modules
 ./services/frontend/node_modules/*
 services/frontend/node_modules/*
-*/node_modules/*
+**/node_modules/** 

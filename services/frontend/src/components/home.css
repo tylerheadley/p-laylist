@@ -36,3 +36,17 @@ p h3{
     font-size:1.5em;
     
 }
+
+.song {
+    width:400px;
+    padding:40px;
+    border-radius: 10px;
+    background-color: #2C365E;
+    margin:30px;
+    color:#F8F8F9;
+    box-sizing: border-box;
+}
+.song-title {
+    font-size: 1.75em;
+    margin-bottom: 5px;
+}
