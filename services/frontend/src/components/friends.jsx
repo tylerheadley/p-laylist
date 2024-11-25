@@ -7,38 +7,20 @@ const Friends = () => {
     const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
     
     useEffect(() => {
-        const fetchTrendingTags = async () => {
+        const fetchFriendsTags = async () => {
             try {
-                const response = await axios.get(`${API_URL}/trending`);
+                const response = await axios.get(`${API_URL}/friends`);
                 setTags(response.data.tags);
             } catch (error) {
-                console.error('Error fetching trending tags:', error);
+                console.error('Error fetching friends:', error);
             }
         };
-        fetchTrendingTags();
+        fetchFriendsTags();
     }, []);
 
     return (
         <div className="centered-container">
-            <h2>Trending Hashtags</h2>
-            <table className="hashtag-table">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Hashtag</th>
-                        <th>Count</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {tags.map((tag, index) => (
-                        <tr key={index}>
-                            <td><span className="rank">{tag.rank}</span></td>
-                            <td><a className="hashtag-link" href={tag.url}>{tag.tag}</a></td>
-                            <td>{tag.count}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <h2>Friends</h2>
         </div>
     );
 };
