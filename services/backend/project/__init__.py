@@ -12,21 +12,23 @@ from flask import (
 import bleach
 import re
 import datetime
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 import sqlalchemy
 import psycopg2
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,text
 from werkzeug.utils import secure_filename
-
+from flask import jsonify, request
+import hashlib 
 
 app = Flask(__name__)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-
-@app.route("/")
+@app.route("/api/tweets", methods=["GET"])
 def root():
     try:
         page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
@@ -49,11 +51,9 @@ def root():
         "SELECT u.name, u.screen_name, t.text, t.created_at "
         "FROM tweets t "
         "JOIN users u USING (id_users) "
-        "ORDER BY created_at DESC, u.screen_name "
+        "ORDER BY t.created_at DESC, u.screen_name "
         "LIMIT :per_page OFFSET :offset;"
     ), {'per_page': per_page, 'offset': offset})
-
-    connection.close()
 
     rows = result.fetchall()
 
@@ -66,47 +66,56 @@ def root():
             'created_at': row[3]
         })
 
-    # Check if there are more messages to display on next pages
+    # Check if there are more messages to display on the next pages
     next_page_url = None
     if len(rows) == per_page:
-        next_page_url = url_for('root', page=page + 1)
+        next_page_url = url_for('root', page=page + 1, _external=True)
 
     prev_page_url = None
     if page > 1:
-        prev_page_url = url_for('root', page=page - 1)
+        prev_page_url = url_for('root', page=page - 1, _external=True)
 
-    return render_template('index.html',
-                           tweets=tweets,
-                           next_page_url=next_page_url,
-                           prev_page_url=prev_page_url,
-                           logged_in=is_logged_in())
-
+    # Return JSON data instead of rendering HTML
+    return jsonify({
+        'tweets': tweets,
+        'next_page_url': next_page_url,
+        'prev_page_url': prev_page_url
+    })
 
 def are_credentials_good(username, password):
-    db_url = "postgresql://postgres:pass@postgres:5432"
-    engine = sqlalchemy.create_engine(db_url, connect_args={
-        'application_name': '__init__.py root()',
-    })
-    connection = engine.connect()
+    """Checks if the provided username and password match a user in the database."""
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()  # Hashing for security
+    query = """
+        SELECT screen_name 
+        FROM users 
+        WHERE screen_name = :username AND password = :password
+    """
 
-    # index only scan using idx_username_password
-    result = connection.execute(text(
-        "SELECT screen_name, password "
-        "FROM users "
-        "WHERE screen_name=:username AND password=:password "
-    ), {'username': username, 'password': password})
-
-    if len(result.fetchall()) == 1:
-        return True
-    else:
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(query), {'username': username, 'password': hashed_password}
+            ).fetchone()
+            return result is not None
+    except Exception as e:
+        print(f"Database error: {e}")
         return False
 
-
 def is_logged_in():
+    """Verifies if the current session is logged in based on cookies."""
     username = request.cookies.get('username')
     password = request.cookies.get('password')
+    
+    if not username or not password:
+        return False
 
     return are_credentials_good(username, password)
+
+@app.route("/check_logged_in", methods=["GET"])
+def check_logged_in():
+    """API endpoint to check if the user is logged in."""
+    logged_in = is_logged_in()
+    return jsonify({"loggedIn": logged_in})
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -125,70 +134,65 @@ def login():
         response = make_response(redirect(url_for('root')))
         response.set_cookie('username', username)
         response.set_cookie('password', password)
-        return response
+        return jsonify({"message": "Login successful!"}), 200
     else:
-        return render_template(
-            'login.html',
-            logged_in=good_credentials,
-            login_default=login_default)
+        return jsonify({"error": "Invalid credentials"}), 401
 
 
 @app.route("/logout")
 def logout():
-    template = render_template(
-        'logout.html',
-        logged_in=False)
-
-    response = make_response(template)
+    response = jsonify({'message': 'Logged out successfully'})
 
     response.set_cookie('username', '', expires=0)
     response.set_cookie('password', '', expires=0)
 
     return response
 
-
-@app.route("/create_account", methods=['GET', 'POST'])
+@app.route("/create_account", methods=['POST'])
 def create_account():
+    data = request.json  # Expecting JSON data from React
 
-    form = request.form.to_dict()
-
+    # Default states
     username_exists = False
     passwords_different = False
 
-    if form and form['password1'] == form['password2']:
+    if data and data['password1'] == data['password2']:
         try:
+            # Database connection
             db_url = "postgresql://postgres:pass@postgres:5432"
-            engine = sqlalchemy.create_engine(db_url, connect_args={
+            engine = create_engine(db_url, connect_args={
                 'application_name': '__init__.py create_account()',
             })
             connection = engine.connect()
 
+            # Insert user into database
             connection.execute(text(
                 "INSERT INTO users (name, screen_name, password) "
                 "VALUES (:name, :username, :password1);"
-            ), form)
+            ), data)
 
             connection.commit()
-
             connection.close()
 
-            response = make_response(redirect(url_for('root')))
-            response.set_cookie('username', form['username'])
-            response.set_cookie('password', form['password1'])
+            # Create response with cookie (username and password)
+            response = make_response(jsonify({"message": "Account created successfully!"}), 201)
+            response.set_cookie('username', data['username'])
+            response.set_cookie('password', data['password1'])
+
             return response
 
         except IntegrityError as e:
-            print("error inserting user:", e)
+            # Handle case where username already exists
+            print("Error inserting user:", e)
             username_exists = True
-    elif form:
+            return jsonify({"error": "Username already exists"}), 400
+
+    elif data:
+        # Passwords don't match
         passwords_different = True
+        return jsonify({"error": "Passwords do not match"}), 400
 
-    return render_template(
-        'create_account.html',
-        username_exists=username_exists,
-        passwords_different=passwords_different,
-        logged_in=is_logged_in())
-
+    return jsonify({"error": "Invalid input"}), 400
 
 @app.route("/create_message", methods=['GET', 'POST'])
 def create_message():
@@ -244,7 +248,9 @@ def create_message():
 
         connection.close()
 
-    return render_template('create_message.html', logged_in=is_logged_in())
+        return jsonify({"message": "Tweet created successfully!"}), 201
+
+    return jsonify({"error": "User not logged in or invalid tweet"}), 400
 
 
 @app.route("/search", methods=['GET', 'POST'])
@@ -315,12 +321,17 @@ def search():
     if page > 1:
         prev_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1)
 
-    return render_template('search.html',
-                           tweets=tweets,
-                           next_page_url=next_page_url,
-                           prev_page_url=prev_page_url,
-                           logged_in=is_logged_in())
-
+    return jsonify(tweets=tweets, next_page_url=next_page_url, prev_page_url=prev_page_url)
+    # return jsonify({
+    #     'tweets': [{
+    #         'user_name': tweet.user_name,
+    #         'screen_name': tweet.screen_name,
+    #         'text': tweet.text,
+    #         'created_at': tweet.created_at
+    #     } for tweet in tweets],
+    #     'next_page_url': next_page_url,
+    #     'prev_page_url': prev_page_url
+    # })
 
 @app.route('/trending')
 def trending():
@@ -352,9 +363,14 @@ def trending():
         })
         i += 1
 
-    return render_template('trending.html',
-                           tags=tags,
-                           logged_in=is_logged_in())
+    return jsonify({
+        'tags': [{
+            'rank': tag.rank,
+            'tag': tag.tag,
+            'count': tag.count,
+            'url': tag.url
+        } for tag in tags]
+    })
 
 """How to get id of the user here???"""
 def get_friends(id_user):
