@@ -58,9 +58,9 @@ def rank_similarity_using_mfcc(input_file, dataset_folder, n_mfcc=16, sr=22050):
     for file_name in os.listdir(dataset_folder):
         file_path = os.path.join(dataset_folder, file_name)
 
-        # # Skip the input file itself
-        # if file_path == input_file:
-        #     continue
+        # Skip the input file itself
+        if file_path == input_file:
+            continue
 
         # Check if the file is an .npy file
         if file_name.endswith('.npy'):
@@ -82,7 +82,7 @@ def rank_similarity_using_mfcc(input_file, dataset_folder, n_mfcc=16, sr=22050):
 # Example usage
 if __name__ == "__main__":
     # Define paths
-    input_file = "test_dataset/song_1.npy"
+    input_file = "test_dataset/disco.00000.wav.npy"
     dataset_folder = "test_dataset/"
 
     # Rank the similarities
