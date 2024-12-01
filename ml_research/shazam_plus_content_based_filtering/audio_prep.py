@@ -10,10 +10,10 @@ import os
 
 FIG_SIZE = (15,10)
 
-song_id = {2, 3, 4, 5}
+# song_id = {2, 3, 4, 5}
 
 # Path to the GTZAN dataset
-dataset_path = '/test_songs/random_songs/genres_original'
+dataset_path = 'test_songs/random_songs/'
 
 # Iterate through each genre folder
 for genre in os.listdir(dataset_path):
@@ -63,4 +63,4 @@ for genre in os.listdir(dataset_path):
                 # MFCCs = librosa.feature.mfcc(signal, sample_rate, n_fft=n_fft, hop_length=hop_length, n_mfcc=13)
 
                 # show plots
-                plt.show()
+                # plt.show()

@@ -67,8 +67,8 @@ def rank_spectrogram_similarity(input_file, dataset_folder):
 # Example usage
 if __name__ == "__main__":
     # Specify the path to the input file and dataset folder
-    input_file = "test_dataset/similar_songs/song_1.npy"
-    dataset_folder = "test_dataset/similar_songs"
+    input_file = "test_dataset/song_5.npy"
+    dataset_folder = "test_dataset/"
 
     # Rank the similarities
     ranked_similarities = rank_spectrogram_similarity(input_file, dataset_folder)
