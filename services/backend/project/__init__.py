@@ -21,7 +21,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import create_engine, text
 import sqlalchemy
 import psycopg2
-from sqlalchemy import create_engine,text
 from werkzeug.utils import secure_filename
 import hashlib
 import requests
@@ -44,12 +43,13 @@ Session(app)
 db = SQLAlchemy(app)
 db_url = "postgresql://postgres:pass@postgres:5432"
 engine = create_engine(db_url, connect_args={'application_name': '__init__.py'})
-SPOTIFY_CLIENT_ID =  app.config["SPOTIFY_CLIENT_ID"]
+SPOTIFY_CLIENT_ID = app.config["SPOTIFY_CLIENT_ID"]
 SPOTIFY_REDIRECT_URI = app.config["SPOTIFY_REDIRECT_URI"]
 SPOTIFY_CLIENT_SECRET = app.config["SPOTIFY_CLIENT_SECRET"]
 
 
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+
 
 @app.route("/api/tweets", methods=["GET"])
 def root():
@@ -111,13 +111,12 @@ def create_account():
 
     username = data.get('username')
     password1 = data.get('password1')
-    password2 = data.get('password2')
     name = data.get('name')
 
     connection = engine.connect()
     result = connection.execute(
-            text("SELECT id_user FROM users WHERE screen_name = :username"),
-            {'username': username}
+        text("SELECT id_user FROM users WHERE screen_name = :username"),
+        {'username': username}
     ).fetchone()
     if result:
         return jsonify({"error": "Username already exists"}), 400
@@ -126,7 +125,7 @@ def create_account():
     print(f"Received data: username={username}, name={name}")
 
     hashed_password = generate_password_hash(password1)
-    
+
     user_data = {
         "username": username,
         "name": name,
@@ -151,6 +150,7 @@ def get_spotify_tokens(auth_code):
     if response.status_code != 200:
         raise Exception("Spotify token request failed")
     return response.json()
+
 
 @app.route("/spotify_callback")
 def spotify_callback():
@@ -196,9 +196,8 @@ def spotify_callback():
             connection.commit()
 
             connection.close()
-    except Exception as e:
+    except Exception:
         return jsonify({"error": "Database save error"}), 500
-    
 
     return redirect("http://localhost:3000")
 
@@ -215,6 +214,7 @@ def are_credentials_good(username, password):
     except Exception as e:
         print(f"Database error: {e}")
         return False
+
 
 @app.route("/login", methods=['POST'])
 def login():
@@ -235,6 +235,7 @@ def check_spotify_linked(username):
             {'username': username}
         ).fetchone()
     return result is not None and result[0] is not None
+
 
 @app.route("/check_logged_in", methods=["GET"])
 def check_logged_in():
@@ -262,7 +263,6 @@ def link_music_app():
     return jsonify({'spotify_connected': spotify_connected})
 
 
-
 @app.route("/spotify_authorize")
 def spotify_authorize():
     token = request.args.get("token")
@@ -278,27 +278,28 @@ def spotify_authorize():
     return redirect(auth_url)
 
 
-
 @app.route("/api/songs", methods=["GET"])
 def song_data():
     try:
         # Define the path to your JSON file
         file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
-       
+
         # Open and read the JSON file
         with open(file_path, "r") as file:
             data = json.load(file)  # Parse the JSON data
 
         # Return the data as a JSON response
         return jsonify(data)
-    
+
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON format"}), 500
 
+
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 @app.route("/friends")
 def friends():

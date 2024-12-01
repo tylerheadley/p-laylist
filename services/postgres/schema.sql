@@ -80,4 +80,14 @@ CREATE TABLE songs_listened (
     FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
 );
 
+-- Friends Table
+CREATE TABLE friends {
+    id_user BIGINT NOT NULL,
+    id_friend BIGINT NOT NULL,
+    added_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_user, id_friend),
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
+    FOREIGN KEY (id_friend) REFERENCES users(id_user) ON DELETE CASCADE,
+}
+
 COMMIT;
