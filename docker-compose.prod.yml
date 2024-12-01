@@ -10,9 +10,10 @@ services:
       - static_volume:/home/app/backend/project/static
       - media_volume:/home/app/backend/project/media
     expose:
-      - 5000
+      - 1341:5000
     env_file:
       - ./.env.prod
+      - ./.env
     depends_on:
       - postgres
       
