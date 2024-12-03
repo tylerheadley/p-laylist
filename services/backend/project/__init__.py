@@ -295,7 +295,25 @@ def song_data():
         return jsonify({"error": "File not found"}), 404
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON format"}), 500
+    
 
+@app.route("/api/friend", methods=["GET"])
+def friend_data():
+    try:
+        # Define the path to your JSON file
+        file_path = os.path.join(os.path.dirname(__file__), "test_friends_data", "friends_data.json")
+
+        # Open and read the JSON file
+        with open(file_path, "r") as file:
+            data = json.load(file)  # Parse the JSON data
+
+        # Return the data as a JSON response
+        return jsonify(data)
+
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON format"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

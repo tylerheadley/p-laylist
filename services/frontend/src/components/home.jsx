@@ -82,14 +82,15 @@ const Home = () => {
       <Carousel
         swipeable={false}
         draggable={true}
-        showDots={true}
+        showDots={false}
         responsive={responsive}
         ssr={true} // means to render carousel on server-side.
         infinite={true}
         autoPlaySpeed={1000}
         keyBoardControl={true}
-        customTransition="all .8"
-        transitionDuration={600}
+        customTransition="transform 0.8s ease-in-out"
+        transitionDuration={800} 
+        renderButtonGroupOutside={true}
         containerClass="carousel-container"
         removeArrowOnDeviceType={["tablet", "mobile"]}
         
