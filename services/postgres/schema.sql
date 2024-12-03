@@ -81,13 +81,13 @@ CREATE TABLE songs_listened (
 );
 
 -- Friends Table
-CREATE TABLE friends {
+CREATE TABLE friends (
     id_user BIGINT NOT NULL,
     id_friend BIGINT NOT NULL,
     added_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id_user, id_friend),
     FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
-    FOREIGN KEY (id_friend) REFERENCES users(id_user) ON DELETE CASCADE,
-}
+    FOREIGN KEY (id_friend) REFERENCES users(id_user) ON DELETE CASCADE
+);
 
 COMMIT;
