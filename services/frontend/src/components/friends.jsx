@@ -1,11 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Button from '@mui/material/Button';
+import './friends.css'
 
 const Friends = () => {
     const [tags, setTags] = useState([]);
+    const [friendList, setFriendList] = useState([]);
 
     const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
     
+    const fetchFriends = async() => {
+        try {
+          const response = await fetch('http://localhost:1341/api/friend');
+          console.log('Fetch Response:', response);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+    
+          const data = await response.json();
+          setFriendList(data.friends); // Update state
+          
+    
+        } catch(error) {
+            console.error('Error fetching songs:', error);
+          };
+      };
+
     useEffect(() => {
         const fetchFriendsTags = async () => {
             try {
@@ -17,11 +37,41 @@ const Friends = () => {
         };
         fetchFriendsTags();
     }, []);
-
+    useEffect(() => {
+        fetchFriends();
+        
+        
+      }, []);
+      
     return (
-        <div className="centered-container">
-            <h2>Friends</h2>
-        </div>
+        <div className='friend-home-page'>
+            <div className='title-section'>
+                <h2 className='title'>Friends</h2>
+                <p className='subheading'>Discover new friends</p>
+            </div>
+        <div className= 'friend-container'>
+            {friendList.length > 0 ? (
+
+            
+
+                friendList.map((friend, index) => (
+                <div className="friend" key={index}>
+                    <img src='placeholder-icon.png' className='profile-picture'/>
+                    <div className="friend-info">
+                    <h3 className="friend-name">{friend.name}</h3>
+                    <p className="friend-inf">@{friend.username} · <em>{friend.recordmendations} Recordmendations</em> </p>
+                    </div>
+                    
+                    <Button variant="contained"  id='follow-button'>Follow</Button>
+                    
+                </div>
+                ))
+            
+            ) : (
+                <p>No songs available.</p>
+            )}
+            </div>
+          </div>
     );
 };
 

@@ -38,7 +38,7 @@ p h3{
 }
 
 .song {
-    width:400px;
+    width:90%;
     padding:40px;
     border-radius: 10px;
     background-color: #2C365E;
@@ -47,6 +47,6 @@ p h3{
     box-sizing: border-box;
 }
 .song-title {
-    font-size: 1.75em;
+    font-size: 1.55em;
     margin-bottom: 5px;
 }

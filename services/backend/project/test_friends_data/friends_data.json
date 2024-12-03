@@ -1,0 +1,56 @@
+{
+    "friends": [
+      {
+        "name": "Jacob",
+        "username": "jacjacjac",
+        "recordmendations": 50
+        
+      },
+      {
+        "name": "Jane",
+        "username": "janedoe",
+        "recordmendations": 33
+      },
+      {
+        "name": "Sarah",
+        "username": "sarahsings",
+        "recordmendations": 75
+      },
+      {
+        "name": "Chris",
+        "username": "chrisnotcris",
+        "recordmendations": 2
+      },
+      {
+        "name": "Smith",
+        "username": "ironsmith",
+        "recordmendations": 42
+      },
+      {
+        "name": "Ashley",
+        "username": "ashhhhhhley",
+        "recordmendations": 32
+      },
+      {
+        "name": "Elizabeth",
+        "username": "bethybytes",
+        "recordmendations": 99
+      },
+      {
+        "name": "Jennifer",
+        "username": "jennylistens",
+        "recordmendations": 45
+      },
+      {
+        "name": "David",
+        "username": "davidddwow",
+        "recordmendations": 9
+      },
+      {
+        "name": "Mark",
+        "username": "mmmmarkmarkmark",
+        "recordmendations": 20
+      }
+    ]
+  }
+  
