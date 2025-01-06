@@ -1,4 +1,4 @@
-# Twitter Clone
+# p-laylist
 
 [![tests](https://github.com/tylerheadley/twitter-clone/actions/workflows/tests.yml/badge.svg)](https://github.com/tylerheadley/twitter-clone/actions/workflows/tests.yml)
 
@@ -9,14 +9,15 @@
 3. [Data](#data)
 4. [Features](#features)
 5. [Schema](#schema)
-6. [Indexes](#indexes)
-7. [Build Instructions](#build-instructions)
+6. [Build Instructions](#build-instructions)
 
 ## Overview 
 
-This project replicates Twitter's core functionality using Instagram's basic architecture and tech stack. For this project, I practiced using many skills and technologies that are useful for software engineers and data scientists.
+Have you ever been frustrated with Spotify recommending the same songs repeatedly, even when your interests change? Or wished you could expand your music taste and fill in the gaps in your playlists? What about that friend with impeccable music taste whose playlists you can’t access because they use Apple Music? Our project tackles these issues by developing an AI-powered web app for collaborative music recommendations. 
 
-See the live website [here](http://ec2-52-15-240-149.us-east-2.compute.amazonaws.com/), hosted using an AWS EC2 instance. **Note: do not use a real password when creating an account. Passwords are not currently hashed.**
+Our platform will generate daily, personalized playlists by using a hybrid of collaborative filtering and content-based recommendation techniques. The core of our product is a recommendation engine that analyzes both user behavior and song characteristics. In addition, we plan to integrate social media-like features for collaborative music sharing, song reviews, and discussions, enhancing community interaction around music discovery.
+
+On the technical side, our recommendation model will employ an ensemble approach. We’ll combine deep learning for music content analysis with traditional recommendation algorithms like matrix factorization or graph-based models for collaborative filtering. By tuning parameterized weights, users can receive diverse recommendations, such as music beyond their typical taste, emerging artists, or popular picks overall. Our ultimate goal is to offer a seamless, engaging experience, connecting users across various streaming platforms, and providing them with dynamic music recommendations based on their playlists and listening habits.
 
 ## Tech Stack 
 
@@ -70,10 +71,6 @@ To enable this desired functionality, I designed a simple schema, shown in this 
 ![schema E-R diagram](schema.png)
 
 There is also a view not shown in the diagram called `tweet_tags_count` that precomputes the counts for each hashtag usage for quick access later.
-
-## Indexes 
-
-An important part of this project was to carefully design indexes on each table to enable efficient query plans so that user requests can be processed in milliseconds, even when tables contain millions of rows. For the most part, standard B-tree indexes were chosen appropriately so that the optimal query plans would be made possible, but a RUM index (similar to a GIN index but with some improvements) was used for the search functionality to search and rank the most relevant tweets for a given search query. The goal was to choose appropriate indexes so that Index Only Scans would be made possible for all queries and the Merge Join algorithm can be used for JOINs. All indexes used are contained within the [`schema.sql`](services/postgres/schema.sql). For testing, over 10 million rows of data was loaded into the `tweet_tags` table and over 4 million rows into the `tweets` and `users` tables; despite the large quantity of data, all queries used by the web service completed in under a second.
 
 ## Build Instruction
 
