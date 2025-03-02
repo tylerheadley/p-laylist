@@ -19,13 +19,12 @@
 .information-container {
     width:45%;
     background-color: #2C365E;
-    
     text-align:left;
     display: flex;
     flex-direction: column;
     justify-content: center;
     box-sizing:border-box;
-    padding:10vh 15vh;
+    padding:15vh 15vh;
 }
 
 .info-bullet-points {
@@ -36,7 +35,7 @@
     
 }
 .info-bullet-points h3{
-    font-size:1.8em;
+    font-size:1.4em;
     font-family: "Nunito Sans", sans-serif;
     letter-spacing: 1px;
     font-weight: 500;
@@ -58,7 +57,7 @@
     width:60%;
 }
 .login-form {
-    
+    font-size: 1.2em;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -68,7 +67,7 @@
 }
 
 .flex-container h2 {
-    font-size:3em;    
+    font-size:2em;    
     font-family: 'Martel', serif;
 }
 
@@ -81,7 +80,7 @@
 }
 
 .container-text-box  h4{
-    font-size:1.5em;
+    font-size:1.2em;
     letter-spacing: 1px;
     margin:10px 0px 0px 0px;
     
@@ -100,7 +99,7 @@
 }
 #submit-button {
     background-color: #2C365E;
-    font-size:1.7em;
+    font-size:1.2em;
     font-weight:500;
     font-family: "Nunito Sans", sans-serif;
     text-transform:none;

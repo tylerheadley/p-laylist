@@ -36,12 +36,8 @@ const Friends = () => {
             }
         };
         fetchFriendsTags();
-    }, []);
-    useEffect(() => {
         fetchFriends();
-        
-        
-      }, []);
+    }, []);
       
     return (
         <div className='friend-home-page'>
@@ -51,8 +47,6 @@ const Friends = () => {
             </div>
         <div className= 'friend-container'>
             {friendList.length > 0 ? (
-
-            
 
                 friendList.map((friend, index) => (
                 <div className="friend" key={index}>
@@ -66,7 +60,6 @@ const Friends = () => {
                     
                 </div>
                 ))
-            
             ) : (
                 <p>No songs available.</p>
             )}

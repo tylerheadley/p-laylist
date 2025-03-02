@@ -34,7 +34,6 @@ const Home = () => {
   };
 
   useEffect(() => {
-
     const url = ''
     const params = new URLSearchParams(location.search);
     if (params.get('spotify_connected') === '1') {
