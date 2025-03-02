@@ -36,17 +36,22 @@ services:
       - ./.env.prod
     depends_on:
       - backend
+    ports:
+      - 3000:80
 
   nginx:
-    build: ./services/nginx
+    build: 
+      context: ./services/nginx
+      dockerfile: Dockerfile
     volumes:
       - static_volume:/home/app/backend/project/static
       - media_volume:/home/app/backend/project/media
+      # - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf # try -- replacing default nginx.conf
     ports:
       - 80:80
     depends_on:
       - backend
-      - frontend
+      - frontend 
 
 volumes:
   postgres_data_prod:
