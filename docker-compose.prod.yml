@@ -36,13 +36,11 @@ services:
       - ./.env.prod
     depends_on:
       - backend
-    ports:
-      - 3000:80
+    # ports:
+    #   - 3000:80
 
   nginx:
-    build: 
-      context: ./services/nginx
-      dockerfile: Dockerfile
+    build: ./services/nginx
     volumes:
       - static_volume:/home/app/backend/project/static
       - media_volume:/home/app/backend/project/media
