@@ -6,7 +6,7 @@ import Carousel from 'react-multi-carousel';
 import 'react-multi-carousel/lib/styles.css';
 
 
-const Home = () => {
+const Home = ({ loggedIn }) => {
 
   
   const [songList, setsongList] = useState([]);
@@ -44,8 +44,14 @@ const Home = () => {
   }, [location.search]);
 
   useEffect(() => {
-    fetchSongs();
-    
+    if (loggedIn) {
+      console.log("logged in. fetching songs")
+
+      fetchSongs();
+    }
+    else {
+      console.log("not logged in.")
+    }
     
   }, []);
   
@@ -97,8 +103,6 @@ const Home = () => {
         itemClass="carousel-item-padding-40-px"
       >
         {songList.length > 0 ? (
-
-          
 
           songList.map((song, index) => (
             <div className="song" key={index}>

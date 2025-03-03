@@ -278,6 +278,27 @@ def spotify_authorize():
     return redirect(auth_url)
 
 
+def get_spotify_song_data(accesstoken, song_name, artist_name, album_name):
+    
+    url = f'https://api.spotify.com/v1/search?'
+    headers = {"Authorization": f"Bearer {accesstoken}"}
+    params = {
+        "q": f"track:{song_name} artist:{artist_name} album:{album_name}",
+        "type": "track",
+        "limit": 1
+    }
+    response= requests.get(url, headers=headers, params=params)
+    if response.status_code != 200:
+        raise Exception("Retrieving Spotify song data failed")
+    else:
+        results = response.get("tracks", {}).get("items", [])
+        if results:
+            track = results[0]
+            return {
+                "spotify_url": track["external_urls"]["spotify"],
+                "image_url": track["album"]["images"][0]["url"] if track["album"]["images"] else None
+            }
+
 @app.route("/api/songs", methods=["GET"])
 def song_data():
     try:
@@ -287,6 +308,26 @@ def song_data():
         # Open and read the JSON file
         with open(file_path, "r") as file:
             data = json.load(file)  # Parse the JSON data
+
+        username = session.get('username')
+        with engine.connect() as connection:
+            access_token = connection.execute(
+                text("SELECT spotify_access_token FROM users WHERE screen_name = :username"),
+                {'username': username}
+            ).fetchone()
+
+        if (access_token is None):
+            return jsonify({"error": "Missing token"}), 400
+
+        for song in data["songs"]:
+            song_name = song.get("title")
+            artist_name = song.get("artist")
+            album_name = song.get("album")
+
+            if song_name and artist_name and album_name:
+                spotify_data = get_spotify_song_data(access_token, song_name, artist_name, album_name)
+                song["spotify_url"] = spotify_data["spotify_url"]
+                song["image_url"] = spotify_data["image_url"]
 
         # Return the data as a JSON response
         return jsonify(data)

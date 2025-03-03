@@ -3,53 +3,69 @@
       {
         "name": "Jacob",
         "username": "jacjacjac",
-        "recordmendations": 50
-        
+        "recordmendations": 50,
+        "recent_songs": "Billie Jean"
       },
       {
         "name": "Jane",
         "username": "janedoe",
-        "recordmendations": 33
+        "recordmendations": 33,
+        "recent_songs": "Let it Go"
       },
       {
         "name": "Sarah",
         "username": "sarahsings",
-        "recordmendations": 75
+        "recordmendations": 75,
+        "recent_songs": "Die with a Smile"
+
       },
       {
         "name": "Chris",
         "username": "chrisnotcris",
-        "recordmendations": 2
+        "recordmendations": 2,
+        "recent_songs": "Billie Jean"
       },
       {
         "name": "Smith",
         "username": "ironsmith",
-        "recordmendations": 42
+        "recordmendations": 42,
+        "recent_songs": "Billie Jean"
+
       },
       {
         "name": "Ashley",
         "username": "ashhhhhhley",
-        "recordmendations": 32
+        "recordmendations": 32,
+        "recent_songs": "Billie Jean"
+
       },
       {
         "name": "Elizabeth",
         "username": "bethybytes",
-        "recordmendations": 99
+        "recordmendations": 99,
+        "recent_songs": "Billie Jean"
+
       },
       {
         "name": "Jennifer",
         "username": "jennylistens",
-        "recordmendations": 45
+        "recordmendations": 45,
+        "recent_songs": "Billie Jean"
+
       },
       {
         "name": "David",
         "username": "davidddwow",
-        "recordmendations": 9
+        "recordmendations": 9,
+        "recent_songs": "Billie Jean"
+
       },
       {
         "name": "Mark",
         "username": "mmmmarkmarkmark",
-        "recordmendations": 20
+        "recordmendations": 20,
+        "recent_songs": "Billie Jean"
+
       }
     ]
   }

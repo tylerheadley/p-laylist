@@ -55,13 +55,16 @@ const Friends = () => {
                     <h3 className="friend-name">{friend.name}</h3>
                     <p className="friend-inf">@{friend.username} · <em>{friend.recordmendations} Recordmendations</em> </p>
                     </div>
-                    
+                    <div className='listening-to'>
+                        <p className="friend-inf">Listening to... </p>
+                        <p>{friend.recent_songs}</p>
+                    </div>
                     <Button variant="contained"  id='follow-button'>Follow</Button>
                     
                 </div>
                 ))
             ) : (
-                <p>No songs available.</p>
+                <p>No friends available.</p>
             )}
             </div>
           </div>

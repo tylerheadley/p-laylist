@@ -36,6 +36,18 @@
 .friend-inf {
     max-width: 100%;
 }
+.listening-to {
+    width:90%;
+    box-sizing: border-box;
+    background-color:#d0d0d0;
+    padding:1.2em;
+    margin-top:1em;
+    border-radius: 20px;
+    color:#2C365E;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
 
 #follow-button {
     background-color:#F8F8F9;
