@@ -40,18 +40,6 @@ services:
     depends_on:
       - backend
 
-  # nginx:
-  #   build: ./services/nginx
-  #   volumes:
-  #     - static_volume:/usr/share/nginx/html  # Mount build output here
-  #     - static_volume:/home/app/backend/project/static
-  #     - media_volume:/home/app/backend/project/media
-  #   ports:
-  #     - 80:80
-  #   depends_on:
-  #     - backend
-  #     - frontend
-
 volumes:
   postgres_data_prod:
   static_volume:
