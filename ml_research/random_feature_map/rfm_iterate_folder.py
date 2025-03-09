@@ -26,6 +26,29 @@ def extract_mfcc_features(wav_file, n_mfcc=16):
     
     return mfccs_mean
 
+def extract_chroma_features(wav_file, n_chroma=12):
+    """
+    Load a wav file and extract Chroma features.
+    
+    Parameters:
+        wav_file (str): Path to the wav file.
+        n_chroma (int): Number of chroma coefficients to extra
+                        There are twelve different pitch coefficients.
+    
+    Returns:
+        np.ndarray: A vector of averaged Chroma features of shape (n_chroma,).
+    """
+    # Load audio file with its native sampling rate
+    y, sr = librosa.load(wav_file, sr=None)
+    
+    # Compute MFCCs: result shape is (n_mfcc, n_frames)
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr, n_chroma=n_chroma)
+    
+    # Average MFCCs across time frames to get a single vector per file
+    chroma_mean = np.mean(chroma, axis=1)
+    
+    return chroma_mean
+
 def random_feature_map(features, target_dim=8, random_state=42):
     """
     Applies a random projection to reduce the dimensionality of the feature vector.
@@ -66,8 +89,13 @@ def process_directory(directory, target_dim=8):
             if file.lower().endswith(".wav"):
                 file_path = os.path.join(root, file)
                 try:
-                    mfcc_features = extract_mfcc_features(file_path)
-                    projected_features = random_feature_map(mfcc_features, target_dim=target_dim)
+                    # Commented out mfcc for now
+                    # mfcc_features = extract_mfcc_features(file_path)
+                    chroma_features = extract_chroma_features(file_path)
+
+                    #projected_features = random_feature_map(mfcc_features, target_dim=target_dim)
+                    projected_features = random_feature_map(chroma_features, target_dim=target_dim)
+
                     results[file_path] = projected_features
                     print(f"Processed: {file_path}")
                 except Exception as e:
