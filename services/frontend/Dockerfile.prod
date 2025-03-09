@@ -19,11 +19,14 @@ RUN npm run build
 # Production image for serving static files with nginx
 FROM nginx:alpine
 
+# testing this
+RUN rm -rf /usr/share/nginx/html/*
+
 # Copy the build output from the first stage to the nginx html directory
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose port 80 to the outside world
-EXPOSE 80
+# # Expose port 80 to the outside world
+# EXPOSE 80
 
 # Start nginx server
 CMD ["nginx", "-g", "daemon off;"]

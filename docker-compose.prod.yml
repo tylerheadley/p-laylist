@@ -31,6 +31,7 @@ services:
       context: ./services/frontend
       dockerfile: Dockerfile.prod  # Use a Dockerfile specific to production
     volumes:
+      - static_volume:/usr/share/nginx/html
       - static_volume:/home/app/backend/project/static  # Copy build output to static folder  
     env_file:        
       - ./.env.prod
@@ -40,6 +41,7 @@ services:
   nginx:
     build: ./services/nginx
     volumes:
+      - static_volume:/usr/share/nginx/html  # Mount build output here
       - static_volume:/home/app/backend/project/static
       - media_volume:/home/app/backend/project/media
     ports:
