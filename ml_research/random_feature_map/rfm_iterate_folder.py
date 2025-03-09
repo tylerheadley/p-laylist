@@ -26,6 +26,35 @@ def extract_mfcc_features(wav_file, n_mfcc=16):
     
     return mfccs_mean
 
+def extract_spectrogram(wav_file, n_fft=2048, hop_length=1024, win_length=None):
+    """
+    Compute the raw spectrogram of a .wav file
+    
+    Parameters:
+        wav_file (str): Path to the wav file.
+        n_fft (int): The number of FFT points, 
+                     larger values indicate better frequnecy resolution at the 
+                     cost of time resolution
+        hop_length (int): Number of samples between successive frames.
+                          larger value reduce overlap between frame, but reduces
+                          time resolution
+        win_length (int): The length of the window for STFT
+    
+    Returns:
+        np.ndarray: Spectrogram of audio file.
+    """
+
+    # Load audio file
+    y, sr = librosa.load(wav_file, sr=None)
+    
+    # Find STFT (spectrogram)
+    spectrogram = librosa.stft(y, n_fft=n_fft, hop_length=hop_length, win_length=win_length)
+    
+    # Change it to magnitude
+    magnitude = np.abs(spectrogram)
+    
+    return magnitude
+
 def extract_chroma_features(wav_file, n_chroma=12):
     """
     Load a wav file and extract Chroma features.
@@ -91,10 +120,19 @@ def process_directory(directory, target_dim=8):
                 try:
                     # Commented out mfcc for now
                     # mfcc_features = extract_mfcc_features(file_path)
-                    chroma_features = extract_chroma_features(file_path)
-
                     #projected_features = random_feature_map(mfcc_features, target_dim=target_dim)
-                    projected_features = random_feature_map(chroma_features, target_dim=target_dim)
+
+                    # Commented out chroma for now
+                    # chroma_features = extract_chroma_features(file_path)
+                    # projected_features = random_feature_map(chroma_features, target_dim=target_dim)
+
+                    spectrogram = extract_spectrogram(file_path)
+                    
+                    # Convert the spectrogram into a 1D vector
+                    spectrogram_flat = spectrogram.flatten()
+
+                    projected_features = random_feature_map(spectrogram_flat, target_dim=target_dim)
+
 
                     results[file_path] = projected_features
                     print(f"Processed: {file_path}")
