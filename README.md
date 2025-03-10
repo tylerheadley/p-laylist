@@ -84,7 +84,9 @@ To build and run the development containers:
 $ docker-compose up -d --build
 ```
 
-Access the Flask app at http://localhost:1341/.
+Access the Flask app at http://localhost:1341/. 
+
+Access the frontend app at http://localhost:3000/.
 
 To stop the containers:
 
