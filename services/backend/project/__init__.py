@@ -132,6 +132,9 @@ def create_account():
         "hashed_password": hashed_password,
     }
 
+    # Store user data in session
+    session['user_data'] = user_data
+
     # Encode data in a JWT to pass to Spotify flow
     token = jwt.encode(user_data, app.config["SECRET_KEY"], algorithm="HS256")
     return jsonify({"redirect": f"http://localhost:1341/spotify_authorize?token={token}"}), 201
@@ -198,6 +201,11 @@ def spotify_callback():
             connection.close()
     except Exception:
         return jsonify({"error": "Database save error"}), 500
+    
+    # Log in the user by storing their username in the session
+    session['username'] = user_data["username"]
+    session['spotify_access_token'] = tokens["access_token"]
+    session['spotify_refresh_token'] = tokens["refresh_token"]
 
     return redirect("http://localhost:3000")
 
@@ -223,6 +231,15 @@ def login():
 
     if are_credentials_good(username, password):
         session['username'] = username
+        # Retrieve Spotify tokens from the database and store them in the session
+        with engine.connect() as connection:
+            result = connection.execute(
+                text("SELECT spotify_access_token, spotify_refresh_token FROM users WHERE screen_name = :username"),
+                {'username': username}
+            ).fetchone()
+            if result:
+                session['spotify_access_token'] = result[0]
+                session['spotify_refresh_token'] = result[1]
         return jsonify({"message": "Login successful!"}), 200
     return jsonify({"error": "Invalid credentials"}), 401
 
