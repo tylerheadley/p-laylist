@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
+import api_based_recommendations.script as ytapi
 
 
 app = Flask(__name__)
@@ -299,14 +300,17 @@ def spotify_authorize():
 def song_data():
     try:
         # Define the path to your JSON file
-        file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+        # file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+        song_title = request.form.get('song_title')
+        artist_name = request.form.get('artist_name')
+        recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
 
         # Open and read the JSON file
-        with open(file_path, "r") as file:
-            data = json.load(file)  # Parse the JSON data
+        # with open(file_path, "r") as file:
+        #     data = json.load(file)  # Parse the JSON data
 
         # Return the data as a JSON response
-        return jsonify(data)
+        return jsonify(recs_JSON)
 
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
