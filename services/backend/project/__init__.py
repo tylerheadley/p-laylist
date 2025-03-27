@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
+import api_based_recommendations.script as ytapi
 
 
 app = Flask(__name__)
@@ -132,6 +133,9 @@ def create_account():
         "hashed_password": hashed_password,
     }
 
+    # Store user data in session
+    session['user_data'] = user_data
+
     # Encode data in a JWT to pass to Spotify flow
     token = jwt.encode(user_data, app.config["SECRET_KEY"], algorithm="HS256")
     return jsonify({"redirect": f"http://localhost:1341/spotify_authorize?token={token}"}), 201
@@ -198,6 +202,11 @@ def spotify_callback():
             connection.close()
     except Exception:
         return jsonify({"error": "Database save error"}), 500
+    
+    # Log in the user by storing their username in the session
+    session['username'] = user_data["username"]
+    session['spotify_access_token'] = tokens["access_token"]
+    session['spotify_refresh_token'] = tokens["refresh_token"]
 
     return redirect("http://localhost:3000")
 
@@ -226,6 +235,15 @@ def login():
 
     if are_credentials_good(username, password):
         session['username'] = username
+        # Retrieve Spotify tokens from the database and store them in the session
+        with engine.connect() as connection:
+            result = connection.execute(
+                text("SELECT spotify_access_token, spotify_refresh_token FROM users WHERE screen_name = :username"),
+                {'username': username}
+            ).fetchone()
+            if result:
+                session['spotify_access_token'] = result[0]
+                session['spotify_refresh_token'] = result[1]
         return jsonify({"message": "Login successful!"}), 200
     return jsonify({"error": "Invalid credentials"}), 401
 
@@ -310,18 +328,21 @@ def get_library():
 def song_data():
     try:
         # Define the path to your JSON file
-        file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+        # file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+        song_title = request.form.get('song_title')
+        artist_name = request.form.get('artist_name')
+        recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
 
         # Open and read the JSON file
-        with open(file_path, "r") as file:
-            data = json.load(file)  # Parse the JSON data
+        # with open(file_path, "r") as file:
+        #     data = json.load(file)  # Parse the JSON data
 
         # fetching token
         token = request.args.get("token")
 
         print(f"token {token}")
         # Return the data as a JSON response
-        return jsonify(data)
+        return jsonify(recs_JSON)
 
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
