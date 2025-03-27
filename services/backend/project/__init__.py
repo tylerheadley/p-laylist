@@ -221,6 +221,9 @@ def login():
     username = request.form.get('username')
     password = request.form.get('password')
 
+    print(f"username {username}")
+    print(f"password {password}")
+
     if are_credentials_good(username, password):
         session['username'] = username
         return jsonify({"message": "Login successful!"}), 200
@@ -266,16 +269,41 @@ def link_music_app():
 @app.route("/spotify_authorize")
 def spotify_authorize():
     token = request.args.get("token")
+    print("token ", token)
     if not token:
         return jsonify({"error": "Missing token"}), 400
 
-    scopes = "user-read-private user-read-email"
+    scopes = "user-read-private user-read-email user-library-read"
     auth_url = (
         f"https://accounts.spotify.com/authorize?response_type=code"
         f"&client_id={SPOTIFY_CLIENT_ID}&scope={scopes}&redirect_uri={SPOTIFY_REDIRECT_URI}"
         f"&state={token}"  # Include the token in the state parameter
     )
     return redirect(auth_url)
+
+@app.route('/get_library', methods=['GET'])
+def get_library():
+    token = request.args.get("token")
+    print(f"token ", token)
+    if not token:
+        return jsonify({"error": "Missing token"}), 400
+    
+    headers = {
+    'Authorization': 'Bearer {token}'
+    }
+
+    BASE_URL = 'https://api.spotify.com/v1/me/playlists'
+    response = request.get(BASE_URL + 'limit=20', headers=headers)
+
+    if response.status_code != 200:
+        print(f"Spotify API error: {response.status_code} - {response.text}")
+        return jsonify({"error": "Failed to fetch library"}, response.status_code)
+
+    data = response.json()
+    print(f"user library {data}")
+    return jsonify(data)
+
+
 
 
 @app.route("/api/songs", methods=["GET"])
@@ -288,6 +316,10 @@ def song_data():
         with open(file_path, "r") as file:
             data = json.load(file)  # Parse the JSON data
 
+        # fetching token
+        token = request.args.get("token")
+
+        print(f"token {token}")
         # Return the data as a JSON response
         return jsonify(data)
 
@@ -314,7 +346,7 @@ def friend_data():
         return jsonify({"error": "File not found"}), 404
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON format"}), 500
-
+    
 
 if __name__ == "__main__":
     app.run(debug=True)
