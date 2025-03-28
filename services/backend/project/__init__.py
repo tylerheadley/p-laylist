@@ -49,7 +49,7 @@ SPOTIFY_REDIRECT_URI = app.config["SPOTIFY_REDIRECT_URI"]
 SPOTIFY_CLIENT_SECRET = app.config["SPOTIFY_CLIENT_SECRET"]
 
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 
 @app.route("/api/tweets", methods=["GET"])
