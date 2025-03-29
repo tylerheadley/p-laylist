@@ -305,23 +305,25 @@ def spotify_authorize():
 
 @app.route('/get_library', methods=['GET'])
 def get_library():
-    username =  session.get('username')
+    access_token =  session.get("spotify_access_token") 
+    username = session.get("username")
 
-    with engine.connect() as connection:
-        result = connection.execute(
-            text("SELECT spotify_access_token, spotify_refresh_token FROM users WHERE screen_name = :username"),
-            {'username': username}
-        ).fetchone()
-        if result:
-            access_token = result[0]
-            refresh_token = result[1]
 
+    # with engine.connect() as connection:
+    #     result = connection.execute(
+    #         text("SELECT spotify_access_token, spotify_refresh_token FROM users WHERE screen_name = :username"),
+    #         {'username': username}
+    #     ).fetchone()
+    #     if result:
+    #         access_token = result[0]
+    #         refresh_token = result[1]
+    print(f"username ", username)
     print(f"token ", access_token)
     if not access_token:
         return jsonify({"error": "Missing token"}), 400
     
     headers = {
-    'Authorization': 'Bearer {token}'
+    'Authorization': 'Bearer {access_token}'
     }
 
     BASE_URL = 'https://api.spotify.com/v1/me/playlists'
