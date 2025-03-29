@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './login.css'; 
 import './create_account.css'; 
@@ -10,23 +10,54 @@ const Login = () => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path ? 'nav-link active' : 'nav-link';
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [error, setError] = useState('');
   const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
+  const [isLoggedIn, setLoggedIn] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post(`${API_URL}/login`, new URLSearchParams(formData), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        withCredentials: true,
       });
       alert(response.data.message);
     } catch (err) {
       setError(err.response?.data?.error || "An unexpected error occurred");
     }
+
+
+    const checkLoginStatus = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/check_logged_in`);
+        setLoggedIn(response.data.loggedIn);
+      } catch (error) {
+        console.error("Error checking login status:", error);
+      }
+    };
+
+    checkLoginStatus();
+    console.log(`isLoggedIn ${isLoggedIn}`)
   };
+
+  
+
+  // useEffect(() => {
+  //   const checkLoginStatus = async () => {
+  //     try {
+  //       const response = await axios.get(`${API_URL}/check_logged_in`);
+  //       setLoggedIn(response.data.loggedIn);
+  //     } catch (error) {
+  //       console.error("Error checking login status:", error);
+  //     }
+  //   };
+
+  //   checkLoginStatus();
+  //   console.log(`isLoggedIn ${isLoggedIn}`)
+  // }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -44,7 +75,7 @@ const Login = () => {
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
         
-            <input type="text" required name="email"  className='login-form-box' onChange={handleChange} placeholder='Username'/>
+            <input type="text" required name="username"  className='login-form-box' onChange={handleChange} placeholder='Username'/>
           </div>
           <div className="form-group">
           
