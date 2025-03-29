@@ -20,7 +20,9 @@ const App = () => {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const response = await axios.get(`${API_URL}/check_logged_in`);
+        const response = await axios.get(`${API_URL}/check_logged_in`, {
+          withCredentials: true
+        });
         setLoggedIn(response.data.loggedIn);
       } catch (error) {
         console.error("Error checking login status:", error);
