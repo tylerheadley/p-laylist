@@ -18,7 +18,10 @@ const Home = () => {
 
   const fetchSongs = async() => {
     try {
-      const response = await fetch('http://localhost:1341/api/songs');
+      const response = await fetch('http://localhost:1341/api/songs', {
+        method: "GET",
+        credentials: "include"
+      });
       console.log('Fetch Response:', response);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
