@@ -229,8 +229,11 @@ def are_credentials_good(username, password):
 @cross_origin(supports_credentials=True)
 
 def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
+    # username = request.form.get('username')
+    # password = request.form.get('password')
+
+    username = "pine"
+    password = "asdf"
 
     print(f"username {username}")
     print(f"password {password}")
@@ -304,38 +307,110 @@ def spotify_authorize():
     return redirect(auth_url)
 
 @app.route('/get_library', methods=['GET'])
+@cross_origin(supports_credentials=True)
 def get_library():
     access_token =  session.get("spotify_access_token") 
     username = session.get("username")
 
-
-    # with engine.connect() as connection:
-    #     result = connection.execute(
-    #         text("SELECT spotify_access_token, spotify_refresh_token FROM users WHERE screen_name = :username"),
-    #         {'username': username}
-    #     ).fetchone()
-    #     if result:
-    #         access_token = result[0]
-    #         refresh_token = result[1]
     print(f"username ", username)
     print(f"token ", access_token)
     if not access_token:
         return jsonify({"error": "Missing token"}), 400
     
     headers = {
-    'Authorization': 'Bearer {access_token}'
+    'Authorization': 'Bearer ' + access_token
+    }
+    params = {
+        'limit': 20
     }
 
-    BASE_URL = 'https://api.spotify.com/v1/me/playlists'
-    response = request.get(BASE_URL + 'limit=20', headers=headers)
+    BASE_URL = 'https://api.spotify.com/v1/me/tracks'
+    response = requests.get(BASE_URL, params=params, headers=headers)
+
+    if response.status_code == 401:
+        print("Access token expired. Refreshing token")
+        
+        new_token_response = get_new_token()
+        json_response = new_token_response[0].get_json()
+        print(f"json response {json_response}")
+
+        new_access_token = json_response['access_token']
+
+
+        if new_access_token:
+            print(f"new access token: {new_access_token}")
+            headers = {
+                'Authorization': 'Bearer ' + new_access_token
+                }
+            response = requests.get(BASE_URL, params=params, headers=headers)
+        else:
+            print(f"Error after refreshing token: {response.status_code}")
+            print(response.text)
+
+
 
     if response.status_code != 200:
         print(f"Spotify API error: {response.status_code} - {response.text}")
         return jsonify({"error": "Failed to fetch library"}, response.status_code)
 
+
     data = response.json()
     print(f"user library {data}")
     return jsonify(data)
+
+
+def get_new_token():
+    url = "https://accounts.spotify.com/api/token"
+    refresh_token = session.get('spotify_refresh_token')
+
+    # Prepare the data for the request
+    data = {
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token
+    }
+
+    auth = (SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
+
+    response = requests.post(url, data=data, auth=auth)
+    username = session.get('username')
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        new_token_data = response.json()
+
+        # will have to put back the access token to SQL
+        # try:
+        #     with engine.connect() as connection:
+        #         result = connection.execute(
+        #             text(
+        #                 "UPDATE users"
+        #                 "SET (spotify_access_token, spotify_refresh_token) "
+        #                 "VALUES (:access_token, :refresh_token)"
+        #                 "WHERE screen_name = :username"
+        #             ),
+        #             {
+        #                 "username": username,
+        #                 "access_token": new_token_data['access_token'],
+        #                 "refresh_token": new_token_data.get('refresh_token', refresh_token)
+        #             }
+        #         )
+        #         print("Insert result:", result.rowcount)
+
+        #         connection.commit()
+
+        #         connection.close()
+        # except Exception:
+        #     return jsonify({"error": "Database save error"}), 500
+        
+        return jsonify({
+                'access_token': new_token_data['access_token'],
+                'refresh_token': new_token_data.get('refresh_token', refresh_token)
+            }), 200
+    else:
+        print(f"Error refreshing token: {response.status_code}")
+        print(response.text)
+        return None, None
+
 
 
 
