@@ -78,6 +78,25 @@ def extract_chroma_features(wav_file, n_chroma=12):
     
     return chroma_mean
 
+def extract_tempogram(wav_file, hop_length=512):
+    """
+    Load a wav file and extract tempo features.
+    
+    Parameters:
+        wav_file (str): Path to the wav file.
+        hop_length (int): Hop length for frame extraction.
+    
+    Returns:
+        np.ndarray: Tempogram of audio file.
+    """
+    # Load audio file with its native sampling rate
+    y, sr = librosa.load(wav_file, sr=None)
+    
+    # Compute the tempogram
+    tempogram = librosa.feature.tempogram(y=y, sr=sr, hop_length=hop_length)
+
+    return tempogram
+
 def random_feature_map(features, target_dim=8, random_state=42):
     """
     Applies a random projection to reduce the dimensionality of the feature vector.
@@ -125,6 +144,16 @@ def process_directory(directory, target_dim=8):
                     # Commented out chroma for now
                     # chroma_features = extract_chroma_features(file_path)
                     # projected_features = random_feature_map(chroma_features, target_dim=target_dim)
+
+                    # Commented out tempogram for now
+                    # Extract tempogram for the file (an array)
+                    # tempogram = extract_tempogram(file_path)
+
+                    # Convert the tempogram to a 1D vector
+                    # tempogram_flat = tempogram.flatten()
+
+                    # Apply random feature map to the tempogram
+                    # projected_features = random_feature_map(tempogram_flat, target_dim=target_dim)
 
                     spectrogram = extract_spectrogram(file_path)
                     
