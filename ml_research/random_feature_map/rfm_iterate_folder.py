@@ -84,18 +84,40 @@ def extract_tempogram(wav_file, hop_length=512):
     
     Parameters:
         wav_file (str): Path to the wav file.
-        hop_length (int): Hop length for frame extraction.
+        hop_length (int): Hop length for frame extraction
+                          512 seems to be the norm (???)
     
     Returns:
         np.ndarray: Tempogram of audio file.
     """
     # Load audio file with its native sampling rate
-    y, sr = librosa.load(wav_file, sr=None)
+    y, sr = librosa.load(wav_file, sr=8000)
     
     # Compute the tempogram
     tempogram = librosa.feature.tempogram(y=y, sr=sr, hop_length=hop_length)
 
     return tempogram
+
+def extract_rhythm(wav_file, hop_length=512):
+    """
+    Load a wav file and extract spectral rhythm features - tempogram-ratio.
+    
+    Parameters:
+        wav_file (str): Path to the wav file.
+        hop_length (int): Hop length for frame extraction
+                          512 seems to be the norm (???)
+    
+    Returns:
+        np.ndarray: Tempogram of audio file.
+    """
+    # Load audio file with its native sampling rate
+    y, sr = librosa.load(wav_file, sr=8000)
+    
+    # Compute the tempogram
+    spectral_rhythm = librosa.feature.tempogram_ratio(y=y, sr=sr, hop_length=hop_length)
+
+    return spectral_rhythm
+
 
 def random_feature_map(features, target_dim=8, random_state=42):
     """
@@ -154,6 +176,16 @@ def process_directory(directory, target_dim=8):
 
                     # Apply random feature map to the tempogram
                     # projected_features = random_feature_map(tempogram_flat, target_dim=target_dim)
+
+                    # Commented out spectral rhythm for now
+                    # Extract rhythm for the file (an array)
+                    # spectral_rhythm = extract_rhythm(file_path)
+
+                    # Convert the spectral rhythm tempogram to a 1D vector
+                    # rhythm_flat = spectral_rhythm.flatten()
+
+                    # Apply random feature map to the rhythm features
+                    # projected_features = random_feature_map(rhythm_flat, target_dim=target_dim)
 
                     spectrogram = extract_spectrogram(file_path)
                     
