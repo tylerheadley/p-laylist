@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
+from cryptography.fernet import Fernet
 # import api_based_recommendations.script as ytapi
 
 
@@ -180,6 +181,11 @@ def spotify_callback():
     print("username:", user_data["username"])
     print("password:", user_data["hashed_password"])
 
+    # encrypted_access_token = encrypt_token(tokens['access_token'])
+
+
+    # encrypted_refresh_token = encrypt_token(tokens['refresh_token'])
+
     try:
         with engine.connect() as connection:
             result = connection.execute(
@@ -191,11 +197,19 @@ def spotify_callback():
                     "name": user_data["name"],
                     "username": user_data["username"],
                     "password": user_data["hashed_password"],
-                    "access_token": tokens["access_token"],
-                    "refresh_token": tokens["refresh_token"]
+                    "access_token": tokens['access_token'],
+                    "refresh_token": tokens['refresh_token']
                 }
             )
             print("Insert result:", result.rowcount)
+
+            result2 = connection.execute(
+                text(
+                    "SELECT * FROM users"
+                )
+            )
+            print(result2.fetchall())
+
 
             connection.commit()
 
@@ -205,8 +219,8 @@ def spotify_callback():
     
     # Log in the user by storing their username in the session
     session['username'] = user_data["username"]
-    session['spotify_access_token'] = tokens["access_token"]
-    session['spotify_refresh_token'] = tokens["refresh_token"]
+    session['spotify_access_token'] = tokens['access_token']
+    session['spotify_refresh_token'] = tokens['refresh_token']
 
     return redirect("http://localhost:3000")
 
@@ -232,6 +246,7 @@ def login():
     # username = request.form.get('username')
     # password = request.form.get('password')
 
+    # for testing purposes
     username = "pine"
     password = "asdf"
 
@@ -309,7 +324,14 @@ def spotify_authorize():
 @app.route('/get_library', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_library():
-    access_token =  session.get("spotify_access_token") 
+    access_token = session.get("spotify_access_token")
+    
+    # print(f"encrypted token ", encrypted_token)
+
+
+    # access_token =  decrypt_token(encrypted_token)
+    
+
     username = session.get("username")
 
     print(f"username ", username)
@@ -356,6 +378,9 @@ def get_library():
 
     data = response.json()
     print(f"user library {data}")
+
+    tracks = data['items']
+
     return jsonify(data)
 
 
@@ -378,30 +403,6 @@ def get_new_token():
     if response.status_code == 200:
         new_token_data = response.json()
 
-        # will have to put back the access token to SQL
-        # try:
-        #     with engine.connect() as connection:
-        #         result = connection.execute(
-        #             text(
-        #                 "UPDATE users"
-        #                 "SET (spotify_access_token, spotify_refresh_token) "
-        #                 "VALUES (:access_token, :refresh_token)"
-        #                 "WHERE screen_name = :username"
-        #             ),
-        #             {
-        #                 "username": username,
-        #                 "access_token": new_token_data['access_token'],
-        #                 "refresh_token": new_token_data.get('refresh_token', refresh_token)
-        #             }
-        #         )
-        #         print("Insert result:", result.rowcount)
-
-        #         connection.commit()
-
-        #         connection.close()
-        # except Exception:
-        #     return jsonify({"error": "Database save error"}), 500
-        
         return jsonify({
                 'access_token': new_token_data['access_token'],
                 'refresh_token': new_token_data.get('refresh_token', refresh_token)
@@ -412,6 +413,22 @@ def get_new_token():
         return None, None
 
 
+
+# Load the encryption key
+def load_key():
+    return open("secret.key", "rb").read()
+
+# Encrypt the token before storing it
+def encrypt_token(token):
+    key = load_key()
+    cipher = Fernet(key)
+    return cipher.encrypt(token.encode()).decode()
+
+# Decrypt the token when retrieving it
+def decrypt_token(encrypted_token):
+    key = load_key()
+    cipher = Fernet(key)
+    return cipher.decrypt(encrypted_token.encode()).decode()
 
 
 
