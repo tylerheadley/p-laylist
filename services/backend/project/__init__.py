@@ -31,6 +31,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
 # import api_based_recommendations.script as ytapi
+import traceback
 
 
 app = Flask(__name__)
@@ -343,7 +344,7 @@ def get_library():
     'Authorization': 'Bearer ' + access_token
     }
     params = {
-        'limit': 20
+        'limit': 50
     }
 
     BASE_URL = 'https://api.spotify.com/v1/me/tracks'
@@ -377,11 +378,81 @@ def get_library():
 
 
     data = response.json()
-    print(f"user library {data}")
 
-    tracks = data['items']
+    user_songs = {}
+    items = data['items']
+    for item in items:
+        track = item['track']
 
-    return jsonify(data)
+        # extract info
+        name = track['name']
+        url = track['external_urls']['spotify']
+        duration = track['duration_ms']
+        explicit = track['explicit']
+        album_cover = track['album']['images'][0]['url']
+        artist_list = []
+        for artist in track['artists']:
+            artist_list.append(artist['name'])
+        
+        # make into dictionary
+        user_songs[name] = {
+                'url': url,
+                'duration': duration,
+                'artist': artist_list,
+                'explicit': explicit,
+                'album_cover': album_cover}
+        
+    
+    # fetch user id from username for later insertion
+    with engine.connect() as connection:
+        user_id = connection.execute(
+            text("SELECT id_user FROM users WHERE screen_name = :username"),
+            {'username': username}
+        ).fetchone()[0]
+        
+        if not user_id:
+            return jsonify({"error": "Cannot fetch user id"}), 400
+        print("user id", user_id)
+
+
+
+    # print("json version ", json.dumps(user_songs))
+
+    # insert song data into song database using user_id
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(
+                    "INSERT INTO songs (id_user, user_songs) "
+                    "VALUES (:id_user, :user_songs)"
+                ),
+                {
+                    "id_user": user_id,
+                    "user_songs": json.dumps(user_songs)
+                }
+            )
+            print("Insert result:", result.rowcount)
+
+            result2 = connection.execute(
+                text(
+                    "SELECT * FROM songs"
+                )
+            )
+            print(result2.fetchall())
+
+
+            connection.commit()
+
+            connection.close()
+    except Exception as e:
+        print("ERROR:", str(e))
+        traceback.print_exc()
+
+        return jsonify({"error": "Song database save error"}), 500
+
+
+
+    return jsonify(user_songs)
 
 
 def get_new_token():

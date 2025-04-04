@@ -41,15 +41,9 @@ CREATE TABLE albums (
 
 -- Songs Table
 CREATE TABLE songs (
-  	id_song SERIAL PRIMARY KEY,
-  	id_album BIGINT NOT NULL,
-    id_artist BIGINT NOT NULL,
-    id_genre BIGINT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    text TEXT NOT NULL,
-    FOREIGN KEY (id_artist) REFERENCES artists(id_artist),
-  	FOREIGN KEY (id_album) REFERENCES albums(id_album),
-  	FOREIGN KEY (id_genre) REFERENCES genre(id_genre)
+    id_user BIGINT NOT NULL,
+    FOREIGN KEY (id_user) REFERENCES users(id_user),
+    user_songs JSONB
 );
 
 -- Playlists Table
