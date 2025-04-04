@@ -325,18 +325,9 @@ def spotify_authorize():
 @app.route('/get_library', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_library():
-    access_token = session.get("spotify_access_token")
-    
-    # print(f"encrypted token ", encrypted_token)
-
-
-    # access_token =  decrypt_token(encrypted_token)
-    
-
+    access_token = session.get("spotify_access_token") 
     username = session.get("username")
 
-    print(f"username ", username)
-    print(f"token ", access_token)
     if not access_token:
         return jsonify({"error": "Missing token"}), 400
     
@@ -416,7 +407,6 @@ def get_library():
 
 
 
-    # print("json version ", json.dumps(user_songs))
 
     # insert song data into song database using user_id
     try:
@@ -433,17 +423,9 @@ def get_library():
             )
             print("Insert result:", result.rowcount)
 
-            result2 = connection.execute(
-                text(
-                    "SELECT * FROM songs"
-                )
-            )
-            print(result2.fetchall())
-
-
             connection.commit()
-
             connection.close()
+
     except Exception as e:
         print("ERROR:", str(e))
         traceback.print_exc()
@@ -453,6 +435,54 @@ def get_library():
 
 
     return jsonify(user_songs)
+
+
+@app.route('/get_genre/<artist_id>', methods=['GET'])
+def get_genre(artist_id):
+    access_token = session.get("spotify_access_token")
+    
+    print(f"token ", access_token)
+    if not access_token:
+        return jsonify({"error": "Missing token"}), 400
+    
+    headers = {
+    'Authorization': 'Bearer ' + access_token
+    }
+
+    BASE_URL = f'https://api.spotify.com/v1/artists/{artist_id}'
+    response = requests.get(BASE_URL, headers=headers)
+
+
+    if response.status_code == 401:
+        print("Access token expired. Refreshing token")
+       
+        
+        new_token_response = get_new_token()
+        new_token_json_response = new_token_response[0].get_json()
+        print(f"json response {new_token_json_response}")
+
+        new_access_token = new_token_json_response['access_token']
+
+
+        if new_access_token:
+            print(f"new access token: {new_access_token}")
+            headers = {
+                'Authorization': 'Bearer ' + new_access_token
+                }
+            response = requests.get(BASE_URL, headers=headers)
+        else:
+            print(f"Error after refreshing token: {response.status_code}")
+            print(response.text)
+
+
+
+    if response.status_code != 200:
+        print(f"Spotify API error: {response.status_code} - {response.text}")
+        return jsonify({"error": "Failed to get artist"}, response.status_code)
+
+    print(response.json())
+
+    return response.json()['genres']
 
 
 def get_new_token():
