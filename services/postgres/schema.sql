@@ -61,8 +61,8 @@ CREATE TABLE playlist_songs (
     id_song BIGINT,
     added_at TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (id_playlist, id_song),
-    FOREIGN KEY (id_playlist) REFERENCES playlists(id_playlist) ON DELETE CASCADE,
-    FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
+    FOREIGN KEY (id_playlist) REFERENCES playlists(id_playlist) ON DELETE CASCADE
+    -- FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
 );
 
 -- Songs Listened Table
@@ -70,8 +70,8 @@ CREATE TABLE songs_listened (
     id_user BIGINT NOT NULL,
     id_song BIGINT NOT NULL,
     listened_at TIMESTAMPTZ NOT NULL,
-    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
-    FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+    -- FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
 );
 
 -- Friends Table
