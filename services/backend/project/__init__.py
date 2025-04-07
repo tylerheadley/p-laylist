@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 from flask import (
     Flask,
@@ -367,32 +368,49 @@ def get_library():
         print(f"Spotify API error: {response.status_code} - {response.text}")
         return jsonify({"error": "Failed to fetch library"}, response.status_code)
 
-
     data = response.json()
+    items = data['items']
+
+    # Collect all artist IDs
+    artist_ids = [artist['id'] for item in items for artist in item['track']['artists']]
+
+    # Deduplicate to avoid unnecessary API calls
+    artist_ids = list(set(artist_ids))
+
+    # Use ThreadPoolExecutor to parallelize
+    genre_map = {}
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(fetch_genre, artist_id, headers) for artist_id in artist_ids]
+        for future in as_completed(futures):
+            artist_id, genres = future.result()
+            genre_map[artist_id] = genres
+
 
     user_songs = {}
-    items = data['items']
+
     for item in items:
         track = item['track']
-
-        # extract info
         name = track['name']
         url = track['external_urls']['spotify']
         duration = track['duration_ms']
         explicit = track['explicit']
         album_cover = track['album']['images'][0]['url']
+    
         artist_list = []
+        genres = []
         for artist in track['artists']:
             artist_list.append(artist['name'])
-        
-        # make into dictionary
+            genres.extend(genre_map.get(artist['id'], []))
+    
         user_songs[name] = {
-                'url': url,
-                'duration': duration,
-                'artist': artist_list,
-                'explicit': explicit,
-                'album_cover': album_cover}
-        
+            'url': url,
+            'duration': duration,
+            'artist': artist_list,
+            'explicit': explicit,
+            'album_cover': album_cover,
+            'genres': list(genres)  # Optional: deduplicate genre list
+        }
+
     
     # fetch user id from username for later insertion
     with engine.connect() as connection:
@@ -438,52 +456,23 @@ def get_library():
 
 
 @app.route('/get_genre/<artist_id>', methods=['GET'])
-def get_genre(artist_id):
-    access_token = session.get("spotify_access_token")
+def fetch_genre(artist_id, headers):
+    url = f'https://api.spotify.com/v1/artists/{artist_id}'
+    response = requests.get(url, headers=headers)
     
-    print(f"token ", access_token)
-    if not access_token:
-        return jsonify({"error": "Missing token"}), 400
-    
-    headers = {
-    'Authorization': 'Bearer ' + access_token
-    }
-
-    BASE_URL = f'https://api.spotify.com/v1/artists/{artist_id}'
-    response = requests.get(BASE_URL, headers=headers)
-
-
     if response.status_code == 401:
-        print("Access token expired. Refreshing token")
-       
-        
+        # Token refresh logic if needed
         new_token_response = get_new_token()
-        new_token_json_response = new_token_response[0].get_json()
-        print(f"json response {new_token_json_response}")
-
-        new_access_token = new_token_json_response['access_token']
-
-
+        new_token_json = new_token_response[0].get_json()
+        new_access_token = new_token_json['access_token']
         if new_access_token:
-            print(f"new access token: {new_access_token}")
-            headers = {
-                'Authorization': 'Bearer ' + new_access_token
-                }
-            response = requests.get(BASE_URL, headers=headers)
-        else:
-            print(f"Error after refreshing token: {response.status_code}")
-            print(response.text)
+            headers = {'Authorization': 'Bearer ' + new_access_token}
+            response = requests.get(url, headers=headers)
 
-
-
-    if response.status_code != 200:
-        print(f"Spotify API error: {response.status_code} - {response.text}")
-        return jsonify({"error": "Failed to get artist"}, response.status_code)
-
-    print(response.json())
-
-    return response.json()['genres']
-
+    if response.status_code == 200:
+        return artist_id, response.json().get('genres', [])
+    else:
+        return artist_id, []
 
 def get_new_token():
     url = "https://accounts.spotify.com/api/token"
