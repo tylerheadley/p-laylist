@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 from flask import (
     Flask,
@@ -14,7 +15,7 @@ import bleach
 import json
 import re
 import datetime
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_session import Session
 from sqlalchemy.exc import IntegrityError
@@ -29,7 +30,9 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-import api_based_recommendations.script as ytapi
+from cryptography.fernet import Fernet
+# import api_based_recommendations.script as ytapi
+import traceback
 
 
 app = Flask(__name__)
@@ -180,6 +183,11 @@ def spotify_callback():
     print("username:", user_data["username"])
     print("password:", user_data["hashed_password"])
 
+    # encrypted_access_token = encrypt_token(tokens['access_token'])
+
+
+    # encrypted_refresh_token = encrypt_token(tokens['refresh_token'])
+
     try:
         with engine.connect() as connection:
             result = connection.execute(
@@ -191,11 +199,19 @@ def spotify_callback():
                     "name": user_data["name"],
                     "username": user_data["username"],
                     "password": user_data["hashed_password"],
-                    "access_token": tokens["access_token"],
-                    "refresh_token": tokens["refresh_token"]
+                    "access_token": tokens['access_token'],
+                    "refresh_token": tokens['refresh_token']
                 }
             )
             print("Insert result:", result.rowcount)
+
+            result2 = connection.execute(
+                text(
+                    "SELECT * FROM users"
+                )
+            )
+            print(result2.fetchall())
+
 
             connection.commit()
 
@@ -205,8 +221,8 @@ def spotify_callback():
     
     # Log in the user by storing their username in the session
     session['username'] = user_data["username"]
-    session['spotify_access_token'] = tokens["access_token"]
-    session['spotify_refresh_token'] = tokens["refresh_token"]
+    session['spotify_access_token'] = tokens['access_token']
+    session['spotify_refresh_token'] = tokens['refresh_token']
 
     return redirect("http://localhost:3000")
 
@@ -226,9 +242,18 @@ def are_credentials_good(username, password):
 
 
 @app.route("/login", methods=['POST'])
+@cross_origin(supports_credentials=True)
+
 def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
+    # username = request.form.get('username')
+    # password = request.form.get('password')
+
+    # for testing purposes
+    username = "pine"
+    password = "asdf"
+
+    print(f"username {username}")
+    print(f"password {password}")
 
     if are_credentials_good(username, password):
         session['username'] = username
@@ -256,6 +281,7 @@ def check_spotify_linked(username):
 
 
 @app.route("/check_logged_in", methods=["GET"])
+@cross_origin(supports_credentials=True)
 def check_logged_in():
     # API endpoint to check if the user is logged in and if Spotify is linked
     username = session.get('username')
@@ -265,6 +291,7 @@ def check_logged_in():
         logged_in = True
     if logged_in:
         spotify_linked = check_spotify_linked(username)
+    print("loggedIn ", logged_in, "spotifyLinked ", spotify_linked, "username ", username)
     return jsonify({"loggedIn": logged_in, "spotifyLinked": spotify_linked})
 
 
@@ -284,16 +311,215 @@ def link_music_app():
 @app.route("/spotify_authorize")
 def spotify_authorize():
     token = request.args.get("token")
+    print("token ", token)
     if not token:
         return jsonify({"error": "Missing token"}), 400
 
-    scopes = "user-read-private user-read-email"
+    scopes = "user-read-private user-read-email user-library-read"
     auth_url = (
         f"https://accounts.spotify.com/authorize?response_type=code"
         f"&client_id={SPOTIFY_CLIENT_ID}&scope={scopes}&redirect_uri={SPOTIFY_REDIRECT_URI}"
         f"&state={token}"  # Include the token in the state parameter
     )
     return redirect(auth_url)
+
+@app.route('/get_library', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_library():
+    access_token = session.get("spotify_access_token") 
+    username = session.get("username")
+
+    if not access_token:
+        return jsonify({"error": "Missing token"}), 400
+    
+    headers = {
+    'Authorization': 'Bearer ' + access_token
+    }
+    params = {
+        'limit': 50
+    }
+
+    BASE_URL = 'https://api.spotify.com/v1/me/tracks'
+    response = requests.get(BASE_URL, params=params, headers=headers)
+
+    if response.status_code == 401:
+        print("Access token expired. Refreshing token")
+        
+        new_token_response = get_new_token()
+        json_response = new_token_response[0].get_json()
+        print(f"json response {json_response}")
+
+        new_access_token = json_response['access_token']
+
+
+        if new_access_token:
+            print(f"new access token: {new_access_token}")
+            headers = {
+                'Authorization': 'Bearer ' + new_access_token
+                }
+            response = requests.get(BASE_URL, params=params, headers=headers)
+        else:
+            print(f"Error after refreshing token: {response.status_code}")
+            print(response.text)
+
+
+
+    if response.status_code != 200:
+        print(f"Spotify API error: {response.status_code} - {response.text}")
+        return jsonify({"error": "Failed to fetch library"}, response.status_code)
+
+    data = response.json()
+    items = data['items']
+
+    # Collect all artist IDs
+    artist_ids = [artist['id'] for item in items for artist in item['track']['artists']]
+
+    # Deduplicate to avoid unnecessary API calls
+    artist_ids = list(set(artist_ids))
+
+    # Use ThreadPoolExecutor to parallelize
+    genre_map = {}
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(fetch_genre, artist_id, headers) for artist_id in artist_ids]
+        for future in as_completed(futures):
+            artist_id, genres = future.result()
+            genre_map[artist_id] = genres
+
+
+    user_songs = {}
+
+    for item in items:
+        track = item['track']
+        name = track['name']
+        url = track['external_urls']['spotify']
+        duration = track['duration_ms']
+        explicit = track['explicit']
+        album_cover = track['album']['images'][0]['url']
+    
+        artist_list = []
+        genres = []
+        for artist in track['artists']:
+            artist_list.append(artist['name'])
+            genres.extend(genre_map.get(artist['id'], []))
+    
+        user_songs[name] = {
+            'url': url,
+            'duration': duration,
+            'artist': artist_list,
+            'explicit': explicit,
+            'album_cover': album_cover,
+            'genres': list(genres)  # Optional: deduplicate genre list
+        }
+
+    
+    # fetch user id from username for later insertion
+    with engine.connect() as connection:
+        user_id = connection.execute(
+            text("SELECT id_user FROM users WHERE screen_name = :username"),
+            {'username': username}
+        ).fetchone()[0]
+        
+        if not user_id:
+            return jsonify({"error": "Cannot fetch user id"}), 400
+        print("user id", user_id)
+
+
+
+
+    # insert song data into song database using user_id
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(
+                    "INSERT INTO songs (id_user, user_songs) "
+                    "VALUES (:id_user, :user_songs)"
+                ),
+                {
+                    "id_user": user_id,
+                    "user_songs": json.dumps(user_songs)
+                }
+            )
+            print("Insert result:", result.rowcount)
+
+            connection.commit()
+            connection.close()
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        traceback.print_exc()
+
+        return jsonify({"error": "Song database save error"}), 500
+
+
+
+    return jsonify(user_songs)
+
+
+@app.route('/get_genre/<artist_id>', methods=['GET'])
+def fetch_genre(artist_id, headers):
+    url = f'https://api.spotify.com/v1/artists/{artist_id}'
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 401:
+        # Token refresh logic if needed
+        new_token_response = get_new_token()
+        new_token_json = new_token_response[0].get_json()
+        new_access_token = new_token_json['access_token']
+        if new_access_token:
+            headers = {'Authorization': 'Bearer ' + new_access_token}
+            response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        return artist_id, response.json().get('genres', [])
+    else:
+        return artist_id, []
+
+def get_new_token():
+    url = "https://accounts.spotify.com/api/token"
+    refresh_token = session.get('spotify_refresh_token')
+
+    # Prepare the data for the request
+    data = {
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token
+    }
+
+    auth = (SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
+
+    response = requests.post(url, data=data, auth=auth)
+    username = session.get('username')
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        new_token_data = response.json()
+
+        return jsonify({
+                'access_token': new_token_data['access_token'],
+                'refresh_token': new_token_data.get('refresh_token', refresh_token)
+            }), 200
+    else:
+        print(f"Error refreshing token: {response.status_code}")
+        print(response.text)
+        return None, None
+
+
+
+# Load the encryption key
+def load_key():
+    return open("secret.key", "rb").read()
+
+# Encrypt the token before storing it
+def encrypt_token(token):
+    key = load_key()
+    cipher = Fernet(key)
+    return cipher.encrypt(token.encode()).decode()
+
+# Decrypt the token when retrieving it
+def decrypt_token(encrypted_token):
+    key = load_key()
+    cipher = Fernet(key)
+    return cipher.decrypt(encrypted_token.encode()).decode()
+
 
 
 @app.route("/api/songs", methods=["GET"])
@@ -309,6 +535,10 @@ def song_data():
         # with open(file_path, "r") as file:
         #     data = json.load(file)  # Parse the JSON data
 
+        # fetching token
+        token = request.args.get("token")
+
+        print(f"token {token}")
         # Return the data as a JSON response
         return jsonify(recs_JSON)
 
@@ -316,7 +546,7 @@ def song_data():
         return jsonify({"error": "File not found"}), 404
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON format"}), 500
-    
+
 
 @app.route("/api/friend", methods=["GET"])
 def friend_data():
@@ -335,6 +565,7 @@ def friend_data():
         return jsonify({"error": "File not found"}), 404
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON format"}), 500
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

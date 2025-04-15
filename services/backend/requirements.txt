@@ -11,3 +11,4 @@ python-dotenv
 spotipy
 werkzeug
 pyjwt
+cryptography

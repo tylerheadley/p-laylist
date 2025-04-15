@@ -30,23 +30,15 @@ services:
     build:
       context: ./services/frontend
       dockerfile: Dockerfile.prod  # Use a Dockerfile specific to production
+    ports:
+    - 80:80
     volumes:
+      # - static_volume:/usr/share/nginx/html
       - static_volume:/home/app/backend/project/static  # Copy build output to static folder  
     env_file:        
       - ./.env.prod
     depends_on:
       - backend
-
-  nginx:
-    build: ./services/nginx
-    volumes:
-      - static_volume:/home/app/backend/project/static
-      - media_volume:/home/app/backend/project/media
-    ports:
-      - 80:80
-    depends_on:
-      - backend
-      - frontend
 
 volumes:
   postgres_data_prod:

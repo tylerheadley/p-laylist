@@ -41,15 +41,9 @@ CREATE TABLE albums (
 
 -- Songs Table
 CREATE TABLE songs (
-  	id_song SERIAL PRIMARY KEY,
-  	id_album BIGINT NOT NULL,
-    id_artist BIGINT NOT NULL,
-    id_genre BIGINT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    text TEXT NOT NULL,
-    FOREIGN KEY (id_artist) REFERENCES artists(id_artist),
-  	FOREIGN KEY (id_album) REFERENCES albums(id_album),
-  	FOREIGN KEY (id_genre) REFERENCES genre(id_genre)
+    id_user BIGINT NOT NULL,
+    FOREIGN KEY (id_user) REFERENCES users(id_user),
+    user_songs JSONB
 );
 
 -- Playlists Table
@@ -67,8 +61,8 @@ CREATE TABLE playlist_songs (
     id_song BIGINT,
     added_at TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (id_playlist, id_song),
-    FOREIGN KEY (id_playlist) REFERENCES playlists(id_playlist) ON DELETE CASCADE,
-    FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
+    FOREIGN KEY (id_playlist) REFERENCES playlists(id_playlist) ON DELETE CASCADE
+    -- FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
 );
 
 -- Songs Listened Table
@@ -76,8 +70,8 @@ CREATE TABLE songs_listened (
     id_user BIGINT NOT NULL,
     id_song BIGINT NOT NULL,
     listened_at TIMESTAMPTZ NOT NULL,
-    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE,
-    FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+    -- FOREIGN KEY (id_song) REFERENCES songs(id_song) ON DELETE CASCADE
 );
 
 -- Friends Table
