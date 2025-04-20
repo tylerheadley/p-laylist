@@ -245,12 +245,12 @@ def are_credentials_good(username, password):
 @cross_origin(supports_credentials=True)
 
 def login():
-    # username = request.form.get('username')
-    # password = request.form.get('password')
+    username = request.form.get('username')
+    password = request.form.get('password')
 
     # for testing purposes
-    username = "pine"
-    password = "asdf"
+    # username = "pine"
+    # password = "asdf"
 
     print(f"username {username}")
     print(f"password {password}")
@@ -369,7 +369,7 @@ def get_library():
         return jsonify({"error": "Failed to fetch library"}, response.status_code)
 
     data = response.json()
-    print("data ", data)
+
     items = data['items']
 
     # Collect all artist IDs
@@ -413,6 +413,8 @@ def get_library():
         }
 
     
+
+    
     # fetch user id from username for later insertion
     with engine.connect() as connection:
         user_id = connection.execute(
@@ -432,8 +434,11 @@ def get_library():
         with engine.connect() as connection:
             result = connection.execute(
                 text(
-                    "INSERT INTO songs (id_user, user_songs) "
+                    "INSERT INTO songs (id_user, user_songs)"
                     "VALUES (:id_user, :user_songs)"
+                    "ON CONFLICT (id_user)"
+                    "DO UPDATE SET user_songs = EXCLUDED.user_songs"
+
                 ),
                 {
                     "id_user": user_id,
@@ -530,7 +535,7 @@ def song_data():
         # file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
         song_title = request.form.get('song_title')
         artist_name = request.form.get('artist_name')
-        recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
+        # recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
 
         # Open and read the JSON file
         # with open(file_path, "r") as file:
@@ -541,7 +546,7 @@ def song_data():
 
         print(f"token {token}")
         # Return the data as a JSON response
-        return jsonify(recs_JSON)
+        # return jsonify(recs_JSON)
 
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
