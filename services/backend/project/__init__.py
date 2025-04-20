@@ -369,6 +369,7 @@ def get_library():
         return jsonify({"error": "Failed to fetch library"}, response.status_code)
 
     data = response.json()
+    print("data ", data)
     items = data['items']
 
     # Collect all artist IDs
