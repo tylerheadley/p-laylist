@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import sys
 from flask import (
     Flask,
     jsonify,
@@ -31,7 +32,9 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
-# import api_based_recommendations.script as ytapi
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+import ml_research.api_based_recommendations.script as ytapi
 import traceback
 
 
@@ -445,7 +448,6 @@ def get_library():
                     "user_songs": json.dumps(user_songs)
                 }
             )
-            print("Insert result:", result.rowcount)
 
             connection.commit()
             connection.close()
@@ -532,21 +534,21 @@ def decrypt_token(encrypted_token):
 def song_data():
     try:
         # Define the path to your JSON file
-        # file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+        file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
         song_title = request.form.get('song_title')
         artist_name = request.form.get('artist_name')
-        # recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
+        recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
 
         # Open and read the JSON file
-        # with open(file_path, "r") as file:
-        #     data = json.load(file)  # Parse the JSON data
+        with open(file_path, "r") as file:
+            data = json.load(file)  # Parse the JSON data
 
         # fetching token
         token = request.args.get("token")
 
         print(f"token {token}")
         # Return the data as a JSON response
-        # return jsonify(recs_JSON)
+        return jsonify(recs_JSON)
 
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
