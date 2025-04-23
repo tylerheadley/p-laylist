@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import sys
 from flask import (
     Flask,
     jsonify,
@@ -369,6 +370,7 @@ def get_library():
         return jsonify({"error": "Failed to fetch library"}, response.status_code)
 
     data = response.json()
+
     items = data['items']
 
     # Collect all artist IDs
@@ -412,6 +414,8 @@ def get_library():
         }
 
     
+
+    
     # fetch user id from username for later insertion
     with engine.connect() as connection:
         user_id = connection.execute(
@@ -431,15 +435,17 @@ def get_library():
         with engine.connect() as connection:
             result = connection.execute(
                 text(
-                    "INSERT INTO songs (id_user, user_songs) "
+                    "INSERT INTO songs (id_user, user_songs)"
                     "VALUES (:id_user, :user_songs)"
+                    "ON CONFLICT (id_user)"
+                    "DO UPDATE SET user_songs = EXCLUDED.user_songs"
+
                 ),
                 {
                     "id_user": user_id,
                     "user_songs": json.dumps(user_songs)
                 }
             )
-            print("Insert result:", result.rowcount)
 
             connection.commit()
             connection.close()
@@ -526,14 +532,14 @@ def decrypt_token(encrypted_token):
 def song_data():
     try:
         # Define the path to your JSON file
-        # file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
+        file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
         song_title = request.form.get('song_title')
         artist_name = request.form.get('artist_name')
         recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
 
         # Open and read the JSON file
-        # with open(file_path, "r") as file:
-        #     data = json.load(file)  # Parse the JSON data
+        with open(file_path, "r") as file:
+            data = json.load(file)  # Parse the JSON data
 
         # fetching token
         token = request.args.get("token")
