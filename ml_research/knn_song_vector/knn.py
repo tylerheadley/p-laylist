@@ -1,30 +1,21 @@
 import numpy as np
-from collections import Counter
 
 def euclidean_distance(point1, point2):
     return np.sqrt(np.sum((point1 - point2)**2))
 
-def knn_predict(training_data, training_labels, test_point, k=3):
-    # Calculate the distance from the test point to every point in the training set.
+def knn_neighbors(training_data, training_labels, test_point, k=3):
     distances = []
-    for i in range(len(training_data)):
-        distance = euclidean_distance(test_point, training_data[i])
-        distances.append((distance, training_labels[i]))
+    for i, point in enumerate(training_data):
+        distance = euclidean_distance(test_point, point)
+        distances.append((distance, training_labels[i], i, point))
     
-    # Sort the distances in ascending order (shortest distance first).
+    # Sort neighbors by ascending distance (closest first)
     distances.sort(key=lambda x: x[0])
-    
-    # Extract the labels of the k closest neighbors.
-    neighbors = [label for (_, label) in distances[:k]]
-    
-    # Count the frequency of each label among the neighbors and pick the most common one.
-    most_common_label = Counter(neighbors).most_common(1)[0][0]
-    return most_common_label
+    return distances[:k]
 
 # Example usage:
 if __name__ == '__main__':
-    # Define a simple dataset of 3-dimensional vectors.
-    # Here, we’ve got two classes: class 0 and class 1.
+    # A simple dataset of 3-dimensional vectors
     training_data = np.array([
         [1.0, 2.0, 3.0],
         [2.0, 3.0, 4.0],
@@ -35,9 +26,13 @@ if __name__ == '__main__':
     ])
     training_labels = np.array([0, 0, 0, 1, 1, 1])
     
-    # Define a new 3D point to classify.
-    test_point = np.array([6.0, 9.0, 7.0])
+    # Define a new test 3D point
+    test_point = np.array([4.0, 4.0, 4.0])
     
-    # Predict the class for the test_point using k=3.
-    prediction = knn_predict(training_data, training_labels, test_point, k=3)
-    print("Predicted class:", prediction)
+    # Retrieve the 3 nearest neighbors
+    neighbors = knn_neighbors(training_data, training_labels, test_point, k=3)
+    
+    # Print the neighbors
+    print("The 3 nearest neighbors to", test_point, "are:")
+    for distance, label, idx, vector in neighbors:
+        print(f"Index: {idx}, Distance: {distance:.2f}, Label: {label}, Vector: {vector}")
