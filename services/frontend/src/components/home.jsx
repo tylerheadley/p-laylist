@@ -49,8 +49,6 @@ const Home = () => {
 
   useEffect(() => {
     fetchSongs();
-    
-    
   }, []);
   
   const responsive = {

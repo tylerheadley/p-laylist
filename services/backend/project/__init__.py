@@ -30,7 +30,7 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-from cryptography.fernet import Fernet
+# from cryptography.fernet import Fernet
 # import api_based_recommendations.script as ytapi
 import traceback
 
@@ -245,15 +245,15 @@ def are_credentials_good(username, password):
 @cross_origin(supports_credentials=True)
 
 def login():
-    # username = request.form.get('username')
-    # password = request.form.get('password')
+    username = request.form.get('username')
+    password = request.form.get('password')
 
     # for testing purposes
-    username = "pine"
-    password = "asdf"
+    # username = "pine"
+    # password = "asdf"
 
-    print(f"username {username}")
-    print(f"password {password}")
+    # print(f"username {username}")
+    # print(f"password {password}")
 
     if are_credentials_good(username, password):
         session['username'] = username
@@ -324,7 +324,7 @@ def spotify_authorize():
     return redirect(auth_url)
 
 @app.route('/get_library', methods=['GET'])
-@cross_origin(supports_credentials=True)
+@cross_origin(supports_credentials=True)    
 def get_library():
     access_token = session.get("spotify_access_token") 
     username = session.get("username")
@@ -452,7 +452,7 @@ def get_library():
 
 
 
-    return jsonify(user_songs)
+    return jsonify({"songs": user_songs})
 
 
 @app.route('/get_genre/<artist_id>', methods=['GET'])
