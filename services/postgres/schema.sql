@@ -41,7 +41,7 @@ CREATE TABLE albums (
 
 -- Songs Table
 CREATE TABLE songs (
-    id_user BIGINT NOT NULL,
+    id_user BIGINT PRIMARY KEY,
     FOREIGN KEY (id_user) REFERENCES users(id_user),
     user_songs JSONB
 );
