@@ -32,7 +32,8 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 # from cryptography.fernet import Fernet
-# import api_based_recommendations.script as ytapi
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from services.backend.project.api_based_recommendations.script import get_song_recommendations as ytapi
 import traceback
 
 
