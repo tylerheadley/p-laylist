@@ -32,9 +32,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-import ml_research.api_based_recommendations.script as ytapi
+# import api_based_recommendations.script as ytapi
 import traceback
 
 
@@ -155,6 +153,7 @@ def get_spotify_tokens(auth_code):
         "redirect_uri": SPOTIFY_REDIRECT_URI,
         "client_id": SPOTIFY_CLIENT_ID,
         "client_secret": SPOTIFY_CLIENT_SECRET,
+        "show_dialog": True,
     }
     response = requests.post(token_url, data=data)
     if response.status_code != 200:
@@ -186,10 +185,8 @@ def spotify_callback():
     print("username:", user_data["username"])
     print("password:", user_data["hashed_password"])
 
-    # encrypted_access_token = encrypt_token(tokens['access_token'])
-
-
-    # encrypted_refresh_token = encrypt_token(tokens['refresh_token'])
+    encrypted_access_token = encrypt_token(tokens['access_token'])
+    encrypted_refresh_token = encrypt_token(tokens['refresh_token'])
 
     try:
         with engine.connect() as connection:
@@ -202,8 +199,8 @@ def spotify_callback():
                     "name": user_data["name"],
                     "username": user_data["username"],
                     "password": user_data["hashed_password"],
-                    "access_token": tokens['access_token'],
-                    "refresh_token": tokens['refresh_token']
+                    "access_token": encrypted_access_token,
+                    "refresh_token": encrypted_refresh_token
                 }
             )
             print("Insert result:", result.rowcount)
@@ -248,12 +245,12 @@ def are_credentials_good(username, password):
 @cross_origin(supports_credentials=True)
 
 def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
+    # username = request.form.get('username')
+    # password = request.form.get('password')
 
     # for testing purposes
-    # username = "pine"
-    # password = "asdf"
+    username = "c"
+    password = "c"
 
     print(f"username {username}")
     print(f"password {password}")
@@ -267,8 +264,8 @@ def login():
                 {'username': username}
             ).fetchone()
             if result:
-                session['spotify_access_token'] = result[0]
-                session['spotify_refresh_token'] = result[1]
+                session['spotify_access_token'] = decrypt_token(result[0])
+                session['spotify_refresh_token'] = decrypt_token(result[1])
         return jsonify({"message": "Login successful!"}), 200
     return jsonify({"error": "Invalid credentials"}), 401
 
@@ -318,7 +315,7 @@ def spotify_authorize():
     if not token:
         return jsonify({"error": "Missing token"}), 400
 
-    scopes = "user-read-private user-read-email user-library-read"
+    scopes = "user-read-private user-read-email user-library-read playlist-modify-private playlist-modify-public"
     auth_url = (
         f"https://accounts.spotify.com/authorize?response_type=code"
         f"&client_id={SPOTIFY_CLIENT_ID}&scope={scopes}&redirect_uri={SPOTIFY_REDIRECT_URI}"
@@ -415,7 +412,6 @@ def get_library():
             'genres': list(genres)  # Optional: deduplicate genre list
         }
 
-    
 
     
     # fetch user id from username for later insertion
@@ -427,8 +423,6 @@ def get_library():
         
         if not user_id:
             return jsonify({"error": "Cannot fetch user id"}), 400
-        print("user id", user_id)
-
 
 
 
@@ -495,7 +489,6 @@ def get_new_token():
     auth = (SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
 
     response = requests.post(url, data=data, auth=auth)
-    username = session.get('username')
 
     # Check if the request was successful
     if response.status_code == 200:
@@ -509,22 +502,162 @@ def get_new_token():
         print(f"Error refreshing token: {response.status_code}")
         print(response.text)
         return None, None
+    
+def get_current_spotify_user_id(access_token):
+    headers = {'Authorization': f'Bearer {access_token}'}
+    response = requests.get('https://api.spotify.com/v1/me', headers=headers)
+
+    if response.status_code == 200:
+        return response.json().get('id')
+    else:
+        return None
+
+@app.route('/get_uris', methods=['GET'])
+def get_uris():
+
+    new_token_response = get_new_token()
+    new_token_json = new_token_response[0].get_json()
+    new_access_token = new_token_json['access_token']
+
+    base_dir = os.path.dirname(__file__)
+    filename = os.path.join(base_dir, "test_song_data", "recommended_songs.json")
+    with open(filename, 'r') as file:
+        data = json.load(file)
+
+    url = f'https://api.spotify.com/v1/search/'
+    headers = {'Authorization': 'Bearer ' + new_access_token}
+
+    uris = dict()
+    # for each song, do a search, then fetch the URI
+    for song in data['songs']:
+        artist, album, title = song['artist'], song['album'], song['title']
+
+        query = f"track:{title} album:{album} artist:{artist}"
+        params = {
+            'q': query,
+            'type': "track",
+            'limit': 5
+        }
+        response = requests.get(url, headers=headers, params=params)
+
+        # empty string as default
+        uris[title] = "" 
+
+        # if no token, refresh and retry once
+        if response.status_code == 401:
+            # Refresh token logic
+            new_token_response = get_new_token()
+            new_token_json = new_token_response[0].get_json()
+            new_access_token = new_token_json['access_token']
+            headers = {'Authorization': 'Bearer ' + new_access_token}
+            response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code == 200:
+            tracks = response.json().get('tracks', {}).get('items', [])
+            
+            for track in tracks:
+                track_name = track['name']
+                # search if title matches
+                if title.lower() in track_name.lower():
+                    uris[title] = track['uri']
+                    break  # Found one, no need to keep looking
+
+    return jsonify(uris)
+
+@app.route('/create_playlist', methods=['POST'])
+def create_playlist():  
+    # username = session.get("username")
+
+    # # fetch user id for playlist creation
+    # with engine.connect() as connection:
+    #     user_id = connection.execute(
+    #         text("SELECT id_user FROM users WHERE screen_name = :username"),
+    #         {'username': username}
+    #     ).fetchone()[0]
+        
+    #     if not user_id:
+    #         return jsonify({"error": "Cannot fetch user id"}), 400
+    
+    
+    # get access token
+    new_token_response = get_new_token()
+    new_token_json = new_token_response[0].get_json()
+    new_access_token = new_token_json['access_token']
+
+    user_id = get_current_spotify_user_id(new_access_token)
+
+    # creates an empty playlist
+    url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
+    headers = {'Authorization': 'Bearer ' + new_access_token}
+    body = {
+        "name": "Your P-laylist Recommendations",
+        "public": False
+    }
+    create_response = requests.post(url, headers=headers, json=body)
+    
+    # if no token, refresh and retry once
+    if create_response.status_code == 401:
+        # Refresh token logic
+        new_token_response = get_new_token()
+        new_token_json = new_token_response[0].get_json()
+        new_access_token = new_token_json['access_token']
+        headers = {'Authorization': 'Bearer ' + new_access_token}
+        create_response = requests.post(url, headers=headers, json=body)
+
+    if create_response.status_code not in (200, 201):
+        return jsonify({"error": f"Failed to create playlist with status code {create_response.status_code}",
+                        "response": create_response.json()}), 400
+
+    playlist_id = create_response.json().get('id', "")
+
+
+    # adds songs to playlist
+    song_uris_response = get_uris()
+    song_uris = song_uris_response.get_json()
+    valid_uris = [uri for uri in song_uris.values() if uri]
+
+    # creates an empty playlist
+    url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+    headers = {'Authorization': 'Bearer ' + new_access_token}
+    body = {
+        "uris": valid_uris
+    }
+
+    add_song_response = requests.post(url, headers=headers, json=body)
+
+    if add_song_response.status_code not in (200, 201):
+                return jsonify({"error": f"Failed to add songs with status code {add_song_response.status_code}",
+                        "response": add_song_response.json()}), 400
+    
+    return "Successfully added songs to playlist"
+
+
+    
+
+
+
+    
+
+
+
+
+
+
+
 
 
 
 # Load the encryption key
-def load_key():
-    return open("secret.key", "rb").read()
 
 # Encrypt the token before storing it
 def encrypt_token(token):
-    key = load_key()
+    key = os.getenv('PASSWORD_ENCRYPTION')
     cipher = Fernet(key)
     return cipher.encrypt(token.encode()).decode()
 
 # Decrypt the token when retrieving it
 def decrypt_token(encrypted_token):
-    key = load_key()
+    key = os.getenv('PASSWORD_ENCRYPTION')
     cipher = Fernet(key)
     return cipher.decrypt(encrypted_token.encode()).decode()
 
@@ -537,7 +670,7 @@ def song_data():
         file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
         song_title = request.form.get('song_title')
         artist_name = request.form.get('artist_name')
-        recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
+        # recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
 
         # Open and read the JSON file
         with open(file_path, "r") as file:
@@ -548,7 +681,7 @@ def song_data():
 
         print(f"token {token}")
         # Return the data as a JSON response
-        return jsonify(recs_JSON)
+        # return jsonify(recs_JSON)
 
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
