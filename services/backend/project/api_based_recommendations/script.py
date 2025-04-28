@@ -6,9 +6,10 @@ load_dotenv()
 # Initialize YTMusic with OAuth credentials
 
 from ytmusicapi import YTMusic, OAuthCredentials
-client_id = os.getenv('YT_MUSIC_CLIENT')
-client_secret = os.getenv('YT_MUSIC_KEY')
-ytmusic = YTMusic('oauth.json', oauth_credentials=OAuthCredentials(client_id=client_id, client_secret=client_secret))
+client_id = os.getenv('YT_CLIENT_ID')
+client_secret = os.getenv('YT_CLIENT_SECRET')
+
+ytmusic = YTMusic('services/backend/project/api_based_recommendations/oauth.json', oauth_credentials=OAuthCredentials(client_id=client_id, client_secret=client_secret))
 
 def get_song_recommendations(song_title, artist_name=None):
     # Construct search query
@@ -26,17 +27,6 @@ def get_song_recommendations(song_title, artist_name=None):
 
     # Retrieve related songs (You might also like)
     related_songs = ytmusic.get_watch_playlist(song_id)
-
-    # print(related_songs)
-
-    # Process the related songs to extract title and artists
-    # recommendations = []
-    # for track in related_songs.get('tracks', []):
-    #     title = track.get('title', 'Unknown Title')
-    #     # Each track may include a list of artists (each as a dict with a 'name' key)
-    #     artists = track.get('artists', [])
-    #     artist_names = ', '.join(artist.get('name', 'Unknown Artist') for artist in artists)
-    #     recommendations.append(f"{title} by {artist_names}")
     
     return related_songs
 

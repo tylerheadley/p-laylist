@@ -16,3 +16,4 @@ services/frontend/node_modules
 services/frontend/node_modules/*
 **/node_modules/** 
 ./services/backend/secret.key
+./services/backend/project/api_based_recommendations/oauth.json*
