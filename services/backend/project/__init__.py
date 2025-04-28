@@ -33,7 +33,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 # from cryptography.fernet import Fernet
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from services.backend.project.api_based_recommendations.script import get_song_recommendations as ytapi
+from api_based_recommendations.script import get_song_recommendations as ytapi
 import traceback
 
 
@@ -536,7 +536,7 @@ def song_data():
         file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
         song_title = request.form.get('song_title')
         artist_name = request.form.get('artist_name')
-        recs_JSON = ytapi.get_song_recommendations(song_title, artist_name)
+        recs_JSON = ytapi(song_title, artist_name)
 
         # Open and read the JSON file
         with open(file_path, "r") as file:
@@ -582,132 +582,3 @@ if __name__ == "__main__":
 def friends():
     # TODO: (YUKI) algorithm for finding friends
     return None
-
-# @app.route("/create_message", methods=['GET', 'POST'])
-# def create_message():
-#     if request.form.get('tweet'):
-
-#         tweet_content = request.form.get('tweet')
-
-#         # Define the regular expression pattern for hashtags
-#         hashtag_pattern = r'\B#\w+'
-
-#         # Find all matches of the pattern in the text
-#         hashtags = list(set(re.findall(hashtag_pattern, tweet_content)))
-
-#         db_url = "postgresql://postgres:pass@postgres:5432"
-#         engine = sqlalchemy.create_engine(db_url, connect_args={
-#             'application_name': '__init__.py create_message()',
-#         })
-#         connection = engine.connect()
-
-#         username = request.cookies.get('username')
-
-#         current_time = datetime.datetime.utcnow()
-
-#         # index scan using idx_username_password
-#         result = connection.execute(text(
-#             "SELECT id_users, screen_name "
-#             "FROM users "
-#             "WHERE screen_name=:username "
-#         ), {'username': username})
-
-#         for row in result.fetchall():
-#             user_id = row[0]
-
-#         result = connection.execute(text(
-#             "SELECT last_value FROM tweets_id_tweets_seq "
-#         ))
-
-#         for row in result.fetchall():
-#             tweet_id = row[0]
-
-#         connection.execute(text(
-#             "INSERT INTO tweets (id_users, text, created_at, lang) "
-#             "VALUES (:id_users, :text, :created_at, 'en');"
-#         ), {'id_users': user_id, 'text': tweet_content, 'created_at': current_time})
-
-#         for hashtag in hashtags:
-#             connection.execute(text(
-#                 "INSERT INTO tweet_tags (id_tweets, tag) "
-#                 "VALUES (:id_tweets, :tag) "
-#             ), {'id_tweets': tweet_id, 'tag': hashtag})
-
-#         connection.commit()
-
-#         connection.close()
-
-#         return jsonify({"message": "Tweet created successfully!"}), 201
-
-#     return jsonify({"error": "User not logged in or invalid tweet"}), 400
-
-
-# @app.route("/search", methods=['GET', 'POST'])
-# def search():
-#     try:
-#         page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
-#     except ValueError:
-#         page = 1
-#     per_page = 20  # Number of messages per page
-
-#     search_query = request.args.get('search_query')
-
-#     db_url = "postgresql://postgres:pass@postgres:5432"
-#     engine = sqlalchemy.create_engine(db_url, connect_args={
-#         'application_name': '__init__.py root()',
-#     })
-#     connection = engine.connect()
-
-#     # Calculate OFFSET based on the page number
-#     offset = max(0, (page - 1) * per_page)
-
-#     is_hashtag_search = request.args.get('hashtag_search')
-#     if is_hashtag_search == '1':
-#         result = connection.execute(text(
-#             "SELECT "
-#             "u.name, u.screen_name, "
-#             "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
-#             "t.created_at "
-#             "FROM tweets t "
-#             "JOIN users u USING (id_users) "
-#             "WHERE t.text ILIKE '%#' || :search_query || '%' "
-#             "LIMIT :per_page OFFSET :offset;"
-#         ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
-#     else:
-#         # Fetch the most recent 20 messages for the current page
-#         result = connection.execute(text(
-#             "SELECT "
-#             "u.name, u.screen_name, "
-#             "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
-#             "t.created_at, "
-#             "ts_rank(to_tsvector('english', t.text), plainto_tsquery(:search_query)) AS rank "
-#             "FROM tweets t "
-#             "JOIN users u USING (id_users) "
-#             "WHERE to_tsvector('english', t.text) @@ plainto_tsquery(:search_query) "
-#             "ORDER BY rank DESC "
-#             "LIMIT :per_page OFFSET :offset;"
-#         ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
-
-#     connection.close()
-
-#     rows = result.fetchall()
-
-#     tweets = []
-#     for row in rows:
-#         tweets.append({
-#             'user_name': row[0],
-#             'screen_name': row[1],
-#             'text': bleach.clean(row[2], tags=['p', 'br', 'a', 'b', 'span'], attributes={'a': ['href']}).replace("<span>", "<span class=highlight>"),
-#             'created_at': row[3]
-#         })
-
-#     # Check if there are more messages to display on next pages
-#     next_page_url = None
-#     if len(rows) == per_page:
-#         next_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page + 1)
-
-#     prev_page_url = None
-#     if page > 1:
-#         prev_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1)
-
-#     return jsonify(tweets=tweets, next_page_url=next_page_url, prev_page_url=prev_page_url)

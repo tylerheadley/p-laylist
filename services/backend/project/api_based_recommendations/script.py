@@ -9,7 +9,7 @@ from ytmusicapi import YTMusic, OAuthCredentials
 client_id = os.getenv('YT_CLIENT_ID')
 client_secret = os.getenv('YT_CLIENT_SECRET')
 
-ytmusic = YTMusic('services/backend/project/api_based_recommendations/oauth.json', oauth_credentials=OAuthCredentials(client_id=client_id, client_secret=client_secret))
+ytmusic = YTMusic(os.path.join(os.path.dirname(__file__), "oauth.json"), oauth_credentials=OAuthCredentials(client_id=client_id, client_secret=client_secret))
 
 def get_song_recommendations(song_title, artist_name=None):
     # Construct search query
