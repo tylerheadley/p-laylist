@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import SongGrid from './song_grid';
 
 const Library = () => {
 
-    const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1341';
+  const [songs, setSongs] = useState([]);
 
   const getLibrary = async() => {
     try {
@@ -16,13 +18,12 @@ const Library = () => {
       }
 
       const data = await response.json();
-      console.log('Library Data:', data.songs);      
+      setSongs(data);      
 
     } catch(error) {
         console.error('Error fetching songs:', error);
       };
   };
-
 
     useEffect(() => {
       getLibrary();
@@ -30,8 +31,14 @@ const Library = () => {
 
     return (
         <div className="total-container">
-            <h2>Search</h2>
-            
+          <div className='title-section'>
+            <h2 className='title'>Library</h2>
+            <p className='subheading'>View your songs</p>
+          </div>
+            <div className='library-grid'>
+              <SongGrid songList={songs.songs} />
+            </div>
+          
         </div>
     );
 };

@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Martel:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+.total-container {
+    margin:10px 0;
+}
+.grid-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 40px;
+    height:70vh;
+}
+
+.song-grid {
+    display:flex;
+    flex-direction:row;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width:100%;
+    padding: 10px 40px;
+    margin-bottom:10px;
+}
+
+.song-container {
+    display:flex;
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 20px;
+    height:14vh;
+    
+}
+.song-info {
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:1rem;
+}
+.album-image {
+    width: 6.5rem;
+    height: 6.5rem;
+}
+.song-title {
+    font-family: 'Martel', serif;
+    font-size:1.3rem;
+    line-height:1.5rem;
+    color:#2C365E;
+
+}
+.song-artist {
+    font-family: 'Nunito', sans-serif;
+    font-size:1rem;
+    line-height: 97%;
+    font-style: italic;
+    color:#2C365E;
+
+
+}

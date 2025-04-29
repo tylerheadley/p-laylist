@@ -19,5 +19,7 @@ RUN pip install -r requirements.txt
 # copy project
 COPY . /usr/src/app/
 
+RUN cat /usr/src/app/project/api_based_recommendations/oauth.json
+
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
