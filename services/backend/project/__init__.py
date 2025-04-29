@@ -537,7 +537,6 @@ def song_data():
         file_path = os.path.join(os.path.dirname(__file__), "test_song_data", "recommended_songs.json")
         song_title = request.form.get('song_title')
         artist_name = request.form.get('artist_name')
-        recs_JSON = get_song_recommendations(song_title, artist_name)
         recs_JSON = ytapi(song_title, artist_name)
 
         # Open and read the JSON file
